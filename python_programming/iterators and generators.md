@@ -61,7 +61,7 @@ if __name__ == '__main__':
 #### 生成器
 调用生成器函数或使用生成器表达式时，就会返回一个生成器对象。
 
-生成器表达式，类似与列表推导，但使用的是圆括号而不是方括号。生成器表达式可以理解为列表推导式的惰性版本：不会迫切的构建列表，而是返回一个生成器，按需惰性生成元素。
+生成器表达式，类似于列表推导，但使用的是圆括号而不是方括号。生成器表达式可以理解为列表推导式的惰性版本：不会迫切的构建列表，而是返回一个生成器，按需惰性生成元素。
 
 ```python
 [expr for iter_var in iterable if cond_var]  # list comprehension
@@ -71,18 +71,14 @@ sum(i*i for i in range(10) if i%2)  # 165, parentheses omitted
 
 只要 python 函数的定义体中有 `yield` 关键字，该函数就是生成器函数。调用生成器函数时，会返回一个生成器对象。生成器函数相当于是生成器工厂。
 
-调用生成器函数返回的生成器对象,包装了生成器函数的定义体。当把生成器传给 `next(...)` 函数时, 生成器函数会向前,执行到函数定义体中的下一个 `yield` 语句, 返回产出的值, 并在函数定义体的当前位置暂停。最终, 当函数的定义体返回时, 外层的生成器对象会抛出 `StopIteration` 异常，这一点与迭代器协议一致。
+调用生成器函数返回的生成器对象,包装了生成器函数的定义体。当把生成器传给 `next(...)` 函数时, 生成器函数会向前, 执行到函数定义体中的下一个 `yield` 语句, 返回产出的值, 并在函数定义体的当前位置暂停。最终, 当函数的定义体返回时, 外层的生成器对象会抛出 `StopIteration` 异常，这一点与迭代器协议一致。
 
-生成器表达式是语法糖：完全可以替换成生成器函数，不过有时使用生成器表达式更便利。但是，生成器函数灵活得多, 可以使用多个语句实现复杂的逻辑, 也可以作为协程使用。此外，生成器函数有名称，因此可以重用。
+生成器表达式是语法糖, 完全可以替换成生成器函数，不过有时使用生成器表达式更便利。但是，生成器函数灵活得多, 可以使用多个语句实现复杂的逻辑, 也可以作为协程使用。此外，生成器函数有名称，因此可以重用。
 
 
 #### 作为协程使用的生成器
 
-python 2.2 引入了 `yield` 关键字，在 python 函数中使用 `yield` 语句就实现了生成器函数。python 2.5 将 `yield` 也可作为一个表达式使用，并为生成器对象添加了额外的方法和功能。当生成器函数被调用时，将返回一个生成器，这一生成器将控制生成器函数的执行过程：
-
-1) 当生成器的方法被调用时，生成器函数才开始执行并一直执行到第一条 `yield expression`，在这里执行暂停(所有的局部状态将被保留)，并向生成器的调用方返回 `expression_list(containing at least one comma yields a tuple.)` 的值;
-
-2) 通过继续调用生成器的某一方法 M， 生成器函数将从原来的状态继续执行，而此时 `yield expression` 的值视生成器被调用的方法 M 而定： 如果 M 为 `__next__()` 方法，则`yield expression` 的结果为 None;如果 M 为 `send(msg)`，则结果为 msg 的值。
+python 2.2 引入了 `yield` 关键字，在 python 函数中使用 `yield` 语句就实现了生成器函数。python 2.5 以后 `yield` 也可作为一个表达式使用，并为生成器对象添加了额外的方法和功能。
 
 生成器的各方法比较：
 
@@ -110,8 +106,7 @@ python 2.2 引入了 `yield` 关键字，在 python 函数中使用 `yield` 语�
 - 而协程是 _数据的消费者_
 - 协程与迭代无关, 虽然在协程中会使用 `yield expression` 产出值，但这与迭代无关
 
-PEP 380 中引入了一个新句法 `yield from`。`yield from` 允许生成器或协程把工作委托给第三方完成。此外，`yield from` 还会创建通道，把内层生成器直接与外层生成器的调用方联系起来。把生成器当成协程使用时, 这个通道特别重要, 因为这不仅使内层生成器能为调用方生成值, 还能让内层生成器使用调用方提供的值。
-
+PEP 380 中引入了一个新句法 `yield from`。`yield from` 允许生成器或协程把工作委托给第三方完成。此外，`yield from` 还会 _创建通道_，把内层生成器直接与外层生成器的调用方联系起来。把生成器当成协程使用时, 这个通道特别重要, 因为这不仅使内层生成器能为调用方生成值, 还能让内层生成器使用调用方提供的值。
 
 
 #### iter 函数释疑
@@ -119,13 +114,11 @@ PEP 380 中引入了一个新句法 `yield from`。`yield from` 允许生成器�
 标准库对 `iter` 函数的介绍：
 
 - iter（object[, sentinel]) 函数
-
-  Python标准库中对`iter`函数的描述
   return an iterator object.
-  
+
   Without a second argument, object must be a __collection object__ which supports the iteration protocol (the` __iter__()` method), or it must support the sequence protocol (the` __getitem__()` method with integer arguments starting at 0). If it does not support either of those protocols, TypeError is raised.
   
-  If the second argument, __sentinel__, is given, then object must be a __callable object__. The iterator created in this case will call object with no arguments for each call to its` __next__() `method; if the value returned is equal to sentinel, `StopIteration` will be raised, otherwise the value will be returned.
+  If the second argument, __sentinel__, is given, then object must be a __callable object__. The iterator created in this case will call object with _no arguments_ for each call to its` __next__() `method; if the value returned is equal to sentinel, `StopIteration` will be raised, otherwise the value will be returned.
   
   One useful application of the second form of `iter() `is to read lines of a file until a certain line is reached. The following example reads a file until the` readline()` method returns an empty string:
 ```
