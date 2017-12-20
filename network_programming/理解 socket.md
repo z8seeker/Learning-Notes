@@ -11,7 +11,7 @@ sockets 本质上是用于进程间通信的 API，最初由 Berkeley 发明，�
 
 
 ### unix domain sockets
-unix domain sockets 是一个数据通信端点，用于在同一台主机的不同进程间交换数据。unix domain sockets 的通信不依赖于底层的网络协议，所有的通信全部在操作系统内核中完成。unix domain sockets 使用文件系统作为自己的地址名称空间（address name space）， 进程引用的 unix domain sockets, 是作为文件系统的索引结点 (inodes)，因此两个进程可以通过打开的同一个 socket 进行通信。
+unix domain sockets 是一个数据通信端点，用于在同一个系统中的不同进程间交换数据。unix domain sockets 的通信不依赖于底层的网络协议，所有的通信全部在操作系统内核中完成。unix domain sockets 使用文件系统作为自己的地址名称空间（address name space）， 进程引用的 unix domain sockets, 是作为文件系统的索引结点 (inodes)，因此两个进程可以通过打开的同一个 socket 进行通信。
 
 unix domain sockets 的地址家族名字是 `AF_UNIX`, 意思是 "address family: UNIX"。
 
@@ -32,7 +32,7 @@ Sockets have two primary properties controlling the way they send data:
 
 
 networked sockets 的地址家族名字是: 
-- `AF_INET`, 意思是 "address family: Internet"
+- `AF_INET`, 意思是 "address family: Internet", 用于 IPv4 addressing
 - `AF_INET6`, 用于IPv6 addressing
 
 除此之外，还有其他的地址家族，但应用最广泛的是：`AF_INET`。
@@ -48,17 +48,19 @@ python 仅支持以下几种地址家族：
 
 网络编程是指使用 network socket 编写应用程序, 因此以下将只针对 network socket 进行讨论。
 
-### socket addresses: Host-Port Pairs
+## socket addresses: Host-Port Pairs
 
 
-一个互联网地址由主机名和端口号组成。有效的端口号范围是: `0~65535`，并且小于 1024 的端口号保留供系统使用。
+一个互联网地址由主机名和端口号组成：
+- 主机名使用 IP 地址表示
+- 有效的端口号范围是: `0~65535`，并且小于 1024 的端口号保留供系统使用。
 
 
 ### connection-oriented versus connectionless
 
 不管使用哪一种地址家族的 socket，都有两种风格的 socket connections：
-1. connection-oriented
-2. connectionless
+1. connection-oriented, or message-oriented
+2. connectionless, or stream-oriented
 
 connection-oriented
 
@@ -68,7 +70,9 @@ connection-oriented
 
 connection-oriented 通信提供有序的、可靠的和不重复的数据传输。实现这种连接类型所用的协议一般是 `Transmission Control Protocol` (TCP) 。为了创建一个 TCP socket，必须使用 `SOCK_STREAM` 作为 socket 的类型。
 
-因为这些 TCP socket 使用 `Internet Protocol` (IP) 找到网络中的目标主机， 因此整个系统一般被叫做: `TCP/IP`
+因为这些 TCP socket 使用 `Internet Protocol` (IP) 找到网络中的目标主机， 因此整个系统一般被叫做: `TCP/IP`。
+
+对于需要保持信息可靠和有序的应用协议，可使用 TCP 协议进行通信，如 HTTP 协议。
 
 Connectionless
 
@@ -82,8 +86,9 @@ datagram type of socket。
 
 因为这些 UDP socket 使用 `Internet Protocol` (IP) 找到网络中的目标主机， 因此整个系统一般被叫做: `UDP/IP`
 
+对于信息有序性不敏感（因为消息是 self-contained, 而且通常是短消息）或需要进行多路广播（multi-casting）的应用协议而言，可以使用 UDP 进行通信，如 DNS 协议。
 
-### 使用 Python 进行网络编程
+## 使用 Python 进行网络编程
 
 标准库中的 socket 模块中有一个 `socket()` 函数，用于创建 socket 对象。socket 对象有一组方法，可以实现基于 socket 的网络通信。
 
@@ -123,7 +128,7 @@ socket 对象常用的方法：
     - s.getpeername(), 连接到的 TCP socket 的远程地址
     - s.getsockname()，当前 socket 的地址
     - s.getsockopt(), 返回给定 socket 选项的值
-    - s.setsockpot(), 设定 socket 选项的值
+    - s.setsockopt(), 设定 socket 选项的值
     - s.close()，关闭 socket
 - blocking-oriented socket methods
     - s.setblocking()，设置 socket 模式为阻塞或非阻塞
@@ -134,7 +139,18 @@ socket 对象常用的方法：
     - s.makefile(), 创建与 socket 相关联的 文件对象
 
 
-创建一个 TCP 服务器
+### TCP server/client
+
+在不同的上下文中， socket 指代着不同的东西，下面对 socket 做以下区分：
+
+- a "client" socket: an endpoint of a conversation
+- a "server" socket: like a switchboard operator
+- the client app uses "client" sockets exclusively
+- the web server uses both "server" sockets and "client" sockets
+
+#### 创建 TCP 服务器
+
+创建 TCP 服务器的常用套路，使用伪代码说明如下：
 
 ```
 ss = socket()  # 创建服务器 socket
@@ -154,150 +170,7 @@ ss.close()  # 关闭 服务器 socket
 
 一旦接收连接后， `accept()` 方法将返回一个 client socket 用于接下来的信息通信。
 
-then, the server socket is free to accept new client connections。
-
-it is common to hand a client request off to a new thread or process to complete the client processing.
-
-
-创建一个 tcp 客户端
-
-```
-cs = socket()  # 创建客户端 socket
-cs.connect()  # 尝试连接服务器
-comm_loop:  # 通信循环
-    cs.send()/cs.recv()  # 对话
-cs.close()  # 关闭客户端 socket
-```
-客户端 socket 建立以后，通过使用 `connection()` 方法与服务器建立连接，然后可以与服务器通信。
-
-
-创建一个 UDP 服务器
-
-```
-ss = socket()  # 创建服务器 socket
-ss.bind()  # 绑定地址
-inf_loop:  # 服务器无限循环
-    cs = ss.recvfrom()/ss.sendto()  # 会话
-ss.close() # 关闭服务器 socket
-```
-
-创建一个 UDP 客户端
-
-```
-cs = socket()
-comm_loop:
-    cs.sendto()/cs.recvfrom()
-cs.close()
-```
-
-socket 模块中的属性
-
-
-
-### SocketServer 模块
-- BaseServer
-- TCPServer/UDPServer
-- ForkingMixin
-- ThreadingMixin
-- ForkingTCPServer/ForkingUDPServer
-- ThreadingTCPServer/ThreadingUDPServer
-- BaseRequestHandler
-- StreamRequestHandler/DatagramRequestHandler
-
-what is event driven ?
-only work when "reacting to" an occurrence of an event in our system.
-
-Events include:
-- sending messages
-- receiving messages
-
-
-### 相关的模块
-
-- socket
-- asyncore/asynchat
-- select，在一个单线程的网络服务器应用中管理多个 socket 连接
-- socketserver,
-
-
-
-我们是通过socket文件进行连接，连接成功的时候会返回一个文件描述符，我们通过对这个文件描述进行读写从而实现网络信息的传输。我们平常通过浏览器浏览的Web网站，然后在浏览器看到的网页或者下载的文件都是通过sockt来传输的。
-
-## socket 模块
-
-1. socket.recv(bufsize[, flags])
-Receive data from the socket. The return value is a bytes object representing the data received. The maximum amount of data to be received at once is specified by bufsize. See the Unix manual page recv(2) for the meaning of the optional argument flags; it defaults to zero.
-
-2. socket.send(bytes[, flags])
-Send data to the socket. The socket must be connected to a remote socket. The optional flags argument has the same meaning as for recv() above. Returns the number of bytes sent. Applications are responsible for checking that all data has been sent; if only some of the data was transmitted, the application needs to attempt delivery of the remaining data. 
-
-3. socket.sendall(bytes[, flags]) 
-Send data to the socket. The socket must be connected to a remote socket. The optional flags argument has the same meaning as for recv() above. Unlike send(), this method continues to send data from bytes until either all data has been sent or an error occurs. None is returned on success. On error, an exception is raised, and there is no way to determine how much data, if any, was successfully sent.
-
-Changed in version 3.5: The socket timeout is no more reset each time data is sent successfuly. The socket timeout is now the maximum total duration to send all data.
-
-Changed in version 3.5: If the system call is interrupted and the signal handler does not raise an exception, the method now retries the system call instead of raising an InterruptedError exception (see PEP 475 for the rationale).
-
-4. socket.sendto(bytes, address) 
-5. socket.sendto(bytes, flags, address) 
-Send data to the socket. The socket should not be connected to a remote socket, since the destination socket is specified by address. The optional flags argument has the same meaning as for recv() above. Return the number of bytes sent. (The format of address depends on the address family — see above.)
-
-
-
-3. socket.settimeout(value)
-Set a timeout on blocking socket operations. The value argument can be a nonnegative floating point number expressing seconds, or None. If a non-zero value is given, subsequent socket operations will raise a timeoutexception if the timeout period value has elapsed before the operation has completed. If zero is given, the socket is put in non-blocking mode. If None is given, the socket is put in blocking mode.
-
-4. socket.recvfrom(bufsize[, flags]) 
-Receive data from the socket. The return value is a pair (bytes, address) where bytes is a bytes object representing the data received and address is the address of the socket sending the data. See the Unix manual page recv(2) for the meaning of the optional argument flags; it defaults to zero. (The format of address depends on the address family — see above.)
-
-Changed in version 3.5: If the system call is interrupted and the signal handler does not raise an exception, the method now retries the system call instead of raising an InterruptedError exception (see PEP 475 for the rationale).
-
-5. socket.setsockopt(level, optname, value) 
-Set the value of the given socket option (see the Unix manual page setsockopt(2)). The needed symbolic constants are defined in the socket module (SO_* etc.). The value can be an integer or a bytes-like object representing a buffer. In the latter case it is up to the caller to ensure that the bytestring contains the proper bits (see the optional built-in module struct for a way to encode C structures as bytestrings).
-
-Changed in version 3.5: Writable bytes-like object is now accepted.
-
-
-
-
-
-
-
-
-
-
-
-## Socket Programming HOWTO
-
-### 1. sockets 概述
-
-INET (i.e. IPv4) sockets --> STREAM (i.e. TCP) sockets --> non-blocking sockets --> blocking sockets
-
-在不同的上下文中， socket 指代着不同的东西，本文对 socket 做以下区分：
-
-- a "client" socket: an endpoint of a conversation
-- a "server" socket: like a switchboard operator
-- the client app uses "client" sockets exclusively
-- the web server uses both "server" sockets and "client" sockets
-
-
-### 2. 历史
-
-在各种形式的 IPC （进程间通信）中， sockets 是最流行的。而对于跨平台通信的 IPC， sockets 则是唯一的选择。Sockets 由 Berkeley 发明，作为 BSD Unix 的一部分。Sockets 可以很轻松的实现任意机器间的对话，因此很快在整个 Internet 流行开来。
-
-### 3. 创建一个 Socket
-
-创建一个 client socket:
-
-```python
-# create an INET, STREAMing socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# now connect to the web server on port 80 - the normal http port
-s.connect(('www.python.org', 80))
-```
-
-当 connect 完成以后，socket s 可以发送请求 (request)，然后读取回复 (reply)，最后被销毁。client socket 一般只进行一次交互。而 web
-server 的情况要相对复杂一些：
+接下来使用 python 程序进行详细讨论：
 
 ```python
 # create an INET, STREAMing socket
@@ -310,8 +183,8 @@ serversocket.listen(5)
 注意事项：
 - 使用 `socket.gethostname()`, the socket would be visiable to the outside world
 - 若使用 ```s.bind(('localhost`, 80))``` 或 ```s.bind(('127.0.0.1', 80))```, only visiable within the same machine.
-- 数值较低的端口号一般是为常见的服务而保留的（HTTP, SNMP etc)
-- `listen` 告诉 socket 库，最多在队列里保持 5 条连接请求（将拒绝超过5条之外的请求），如果代码组织得当的话，5 条就足够用了
+- 数值较低的端口号 (< 1023) 一般是为常见的服务而保留的（HTTP, SNMP etc)
+- `listen` 告诉 socket 库，最多在队列里保持 5 条连接请求（将拒绝超过5条之外的请求），如果代码组织得当的话，5 条就足够用了。
 
 接下来，进入 web server 主循环：
 
@@ -337,22 +210,39 @@ while True:
  
 当其他 "client" socket 执行 `connect()` 连接到 "server" socket 绑定的 (host, port) 时， "server" socket 将对此做出响应并创建一个 clientsocket。clientsocket 一旦创建完毕，"server" socket 将回头 (go back) 继续监听其他的连接请求。这两个 "clients" (socket) 使用动态分配的端口 (port) 自由的进行通信，通信完毕后该端口将被回收。
 
+#### 创建 tcp 客户端
 
-### 4. IPC
-若要在一台机器上的两个进程间实现快速的 IPC，应该使用 pipes 或者 shared memory。 
+创建 tcp 客户端的常用套路，使用伪代码表示如下：
 
-标准库里的 multiprocessing 模块集成了用于进行跨平台 IPC 的 API
+```
+cs = socket()  # 创建客户端 socket
+cs.connect()  # 尝试连接服务器
+comm_loop:  # 通信循环
+    cs.send()/cs.recv()  # 对话
+cs.close()  # 关闭客户端 socket
+```
+客户端 socket 建立以后，通过使用 `connection()` 方法与服务器建立连接，然后可以与服务器通信。
+
+接下来使用 python 程序进行详细讨论：
+
+```python
+# create an INET, STREAMing socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# now connect to the web server on port 80 - the normal http port
+s.connect(('www.python.org', 80))
+```
+
+当 connect 完成以后，socket s 可以发送请求 (request)，然后读取回复 (reply)，最后被销毁。client socket 一般只进行一次交互。
 
 
-### 5. 使用 Socket
+#### 更好的使用 socket 进行 TCP 通信
 
-需要指出的一点是， 浏览器的 "client" socket 与 web server 的 "client" socket 是完全一样的东西。二者之间是 "peer to peer" 通信，也就是说，我们要规定二者通信的规则 （因为sockets 对此不做任何规定）。通常的做法是，进行连接的 socket 通过发送请求发起会话。
+需要指出的一点是， 浏览器的 "client" socket 与 web server 的 "client" socket 是完全一样的东西。二者之间是 "peer to peer" 通信，也就是说，我们要规定二者通信的规则 （因为 sockets 对此不做任何规定）。通常的做法是，进行连接的 socket 通过发送请求发起会话。
 
 可以使用两组动词实现 sockets 之间的通信：
 - `send` and `recv`
-- 或者将 client socket 转为 file-like 对象，然后使用 `read` and `wirte`
-    - 需要对 socket 执行 `flush` 操作，否则在进行 read 时将一直处于 wait 状态
-    - 这是因为 request 数据 仍然在输出缓冲区中
+- 或者将 client socket 转为 file-like 对象，然后使用 `read` 和 `wirte`
+    - 需要对 socket 执行 `flush` 操作，否则在进行 read 时将一直处于 wait 状态，这是因为 request 数据仍然在输出缓冲区中
 
 
 `send` 和 `recv` 对网络缓冲区 (network buffers) 的操作：
@@ -365,83 +255,35 @@ while True:
 
 - 当 `recv` 返回 0 字节时，意味着连接的另一侧已经关闭连接（或正在关闭），此后将不会在这个连接上收到任何数据，但有可能成功发送数据
 
-像 HTTP 这样的协议，使用一个 socket 仅仅进行一次数据传输： client 发送一个请求，然后读取响应，之后这个 socket 就被丢弃了。这也意味着 client 可以侦测到响应的结束（by receiving 0 bytes）
+像 HTTP 1.0/1.1 这样的协议，使用一个 socket 仅仅进行一次数据传输： client 发送一个请求，然后读取响应，之后这个 socket 就被丢弃了。这也意味着 client 可以侦测到响应的结束（by receiving 0 bytes）
 
 
-如果我们想重用（reuse） socket，我们需要意识到在 socket 中并不存在 EOT （end of transmission）传输结束符。如果一个 socket `send` 或 `recv` 返回 0 bytes 时， 这个连接就不可用了（broken）。如果连接还没被 broken，我们可能一直处于等待 `recv` 的状态，这是因为 socket 不会告诉我们目前没有需要 read 的数据了 （for now）。当我们考虑到以上这些时，我们会发现关于 socket 的一个基本事实，消息必须：
+如果我们想重用 socket，我们需要意识到在 socket 中并不存在 EOT （end of transmission）传输结束符。如果一个 socket `send` 或 `recv` 返回 0 bytes 时， 这个连接就不可用了（broken）。如果连接还没被 broken，我们可能一直处于等待 `recv` 的状态，这是因为 socket 不会告诉我们目前没有需要读的数据了。当我们考虑到以上这些情况时，我们会发现关于 socket 的一个基本事实，消息必须：
 - 或者是 fixed length （yuck）
 - 或者是 delimited （使用分隔符，shrug）
 - 或者明确表明长度 （much better）
 - 或者以关闭连接作为结束 （end）
 
-如果我们不想关闭连接，最简单的方法是使用固定长度的消息（a fixed length message）:
 
-```python
-class MySocket:
-    """demonstration class only
-      - coded for clarity, not efficiency
-    """
-    
-    def __init__(self, sock=None):
-        if sock is None:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        else:
-            self.sock = sock
-    
-    def connect(self, host, port):
-        self.sock.connect((host, port))
-    
-    def mysend(self, msg):
-        totalsent = 0
-        while totalsent < MSGLEN:
-            sent = self.sock.send(msg[totalsent:])
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalsent = totalsent + sent
-            
-    def myreceive(self):
-        chunks = []
-        bytes_recd = 0
-        while bytes_recd < MSGLEN:
-            chunk = self.sock.recv(min(MSGLEN - byte_recd, 2048))
-            if chunk == b'':
-                raise RuntimeError("socket connection broken")
-            chunks.append(chunk)
-            bytes_recd = bytes_recd + len(chunk)
-        return b''.join(chunks)
-
-```
-增强上面程序的几个方法：
-1. 使消息的第一个字符表示信息类型，然后使用这个类型信息确定消息长度
-2. 如果使用 delimited 的方法，我们可能接收到任意长度的数据（4096,8192 is frequently a good match）
-3. 为消息加上一个长度前缀（say, as 5 numeric characters），但是在 high network loads 时，我们可能不会在一次 `recv` 时就全部收到这 5 个字符。除非我们进行两次 `recv` 循环：第一次确定消息的长度；第二次获得消息的数据。
-
-
-### 6. Binary Data
-
-对于二进制数据的最大问题是不同机器间可能有不同的表示格式
-
-
-### Disconnecting
+Disconnecting
 
 严格意义上讲，我们应该在 `close` socket 前先进行 `shutdown` 操作。然而绝大部分 socket 库只需使用一个 `close` 就和 `shutdown(); close()` 一样，因此一般不需显示的使用 `shutdown`
 
 一个显示使用 shutdown 的场景是在进行 HTTP-like 的数据交换时，client 发送一个请求，然后执行 `shutdown(1)` 。 这将告诉服务器“client 已经完成发送， 但仍然可以接收数据”。服务器可以探测到 “EOF”（接收到 0字节），可以确定收到了完整的请求。当服务器发送响应后，实际上，client 仍然处于接收状态（still receiving）
 
-please close your sockets when you're done.
+Please close your sockets when you're done.
 
 
-### When sockets die
+When sockets die
 
-使用阻塞 sockets 时发生的最坏事情可能就是另一侧的 socket comes down hard （without doing a close），这时我们的 socket 可能处于挂起状态（hang），这是因为 TCP 可能会等很长很长时间才会放弃这个连接。
+使用阻塞 sockets 时发生的最坏事情可能就是另一侧的 socket comes down hard （without doing a close），这时我们这一侧的 socket 可能处于挂起状态（hang），这是因为 TCP 可能会等 _很长很长_ 时间才会丢弃这个连接。
 
 
-### Non-blocking sockets
+Non-blocking sockets
 
 在 python 里 使用 `socket.setblocking(0)` 可以将 socket 设置为 non-blocking 式的。与阻塞式的主要机制上的区别是：
 - `send`, `recv`, `connect`, `accept` 可以在没有做任何工作时就返回
 - 使用 non-blocking sockets 的正确方式是使用 select
-
 
 ```python
 
@@ -454,3 +296,32 @@ ready_to_read, ready_to_write, in_error =\
 
 ```
 
+### UDP server/client
+
+#### 创建 UDP 服务器
+创建 UDP 服务器的常用套路，使用伪代码表示如下：
+
+```
+ss = socket()  # 创建服务器 socket
+ss.bind()  # 绑定地址
+inf_loop:  # 服务器无限循环
+    cs = ss.recvfrom()/ss.sendto()  # 会话
+ss.close() # 关闭服务器 socket
+```
+
+#### 创建 UDP 客户端
+创建 UDP 客户端的常用套路，使用伪代码表示如下：
+
+```
+cs = socket()
+comm_loop:  # 通信循环
+    cs.sendto()/cs.recvfrom()
+cs.close()
+```
+
+### 其他相关的模块
+- socketserver
+- select，在一个单线程的网络服务器应用中管理多个 socket 连接
+- selectors
+- asyncore/asynchat
+- asyncio
