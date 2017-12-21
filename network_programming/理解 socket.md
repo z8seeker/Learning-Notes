@@ -26,117 +26,115 @@ network socket 是计算机网络中的一个节点用于发送或接收数据�
 
 进程通过使用 `socket descriptor`（通常在内部表示为一个整数） 引用 socket。进程首先请求协议栈创建一个 socket，然后协议栈向进程返回一个 `socket descriptor`。当进程需要使用 socket 发送或接收数据时，就把这个 `socket descriptor` 传递给协议栈。
 
-Sockets have two primary properties controlling the way they send data: 
+network sockets have two primary properties controlling the way they send data: 
 - the address family controls the OSI network layer protocol used
 - the socket type controls the transport layer protocol
 
 
-networked sockets 的地址家族名字是: 
+networked sockets 的常用地址家族名字是: 
 - `AF_INET`, 意思是 "address family: Internet", 用于 IPv4 addressing
-- `AF_INET6`, 用于IPv6 addressing
+- `AF_INET6`, 用于 IPv6 addressing
 
 除此之外，还有其他的地址家族，但应用最广泛的是：`AF_INET`。
 
 
 ### python 支持的 socket 种类
-python 仅支持以下几种地址家族：
+python 支持上面说的几种地址家族：
 - AF_UNIX
-- AF_NETLINK
 - AF_INET*
 
-在 Python 2.5 中引入了对一类特殊 Linux socket 的支持：`AF_NETLINK` (connectionless)。这种 socket 使用标准的 BSD socket 接口 允许用户代码与内核级代码进行 IPC
+在 Python 2.5 中引入了对一类特殊 Linux socket 的支持：`AF_NETLINK` (connectionless)。这种 socket 使用标准的 BSD socket 接口 允许用户代码与内核级代码进行 IPC。
 
-网络编程是指使用 network socket 编写应用程序, 因此以下将只针对 network socket 进行讨论。
+此外， Python 还支持其他地址家族的 socket，具体可以查看 socket 模块的文档。网络编程是指使用 network socket 编写应用程序, 因此以下将只针对 network socket 进行讨论。
+
 
 ## socket addresses: Host-Port Pairs
-
-
 一个互联网地址由主机名和端口号组成：
-- 主机名使用 IP 地址表示
-- 有效的端口号范围是: `0~65535`，并且小于 1024 的端口号保留供系统使用。
+- 主机名使用 域名或 IP 地址表示
+- 有效的端口号范围是: `0~65535`，并且小于 1024 的端口号保留供系统使用
 
 
 ### connection-oriented versus connectionless
 
 不管使用哪一种地址家族的 socket，都有两种风格的 socket connections：
-1. connection-oriented, or message-oriented
-2. connectionless, or stream-oriented
+1. connection-oriented, or stream-oriented
+2. connectionless, or message-oriented
 
 connection-oriented
 
-只有当建立了连接以后，sockets 间才能进行通信。这种类型的通信业叫做：
+只有当建立了连接以后，sockets 间才能进行通信。这种类型的通信也叫做：
 - virtual circuit
 - stream socket
 
-connection-oriented 通信提供有序的、可靠的和不重复的数据传输。实现这种连接类型所用的协议一般是 `Transmission Control Protocol` (TCP) 。为了创建一个 TCP socket，必须使用 `SOCK_STREAM` 作为 socket 的类型。
-
-因为这些 TCP socket 使用 `Internet Protocol` (IP) 找到网络中的目标主机， 因此整个系统一般被叫做: `TCP/IP`。
+connection-oriented 通信提供 _有序的、可靠的和不重复的数据传输_。实现这种连接类型所用的协议是 `Transmission Control Protocol` (TCP) 。为了创建一个 TCP socket，必须使用 `SOCK_STREAM` 作为 socket 的类型。因为这些 TCP socket 使用 `Internet Protocol` (IP) 找到网络中的目标主机， 因此整个系统一般被叫做: `TCP/IP`。
 
 对于需要保持信息可靠和有序的应用协议，可使用 TCP 协议进行通信，如 HTTP 协议。
 
+
 Connectionless
 
-datagram type of socket。
+在通信开始前不需要建立连接, 这种类型的通信也叫做： datagram socket。Connectionless 通信过程中, 传送数据的有序性，可靠性和不重复性没有保证，通常一次传送整个完整消息。相比 connection-oriented socket， datagram 有更好的性能。
 
-在通信开始前不需要建立连接。数据传送过程中的有序性，可靠性和不重复性没有保证，一次传送整个完整消息。
-
-相比 connection-oriented socket， datagram 有更好的性能。
-
-实现这种连接类型所用的协议一般是 `User Datagram Protocol` (UDP)。为了创建一个 UDP socket 我们必须使用 `SOCK_DGRAM` 坐在 socket 的类型。
-
-因为这些 UDP socket 使用 `Internet Protocol` (IP) 找到网络中的目标主机， 因此整个系统一般被叫做: `UDP/IP`
+实现这种连接类型所用的协议一般是 `User Datagram Protocol` (UDP)。为了创建一个 UDP socket 我们必须使用 `SOCK_DGRAM` 作为 socket 的类型。因为这些 UDP socket 使用 `Internet Protocol` (IP) 找到网络中的目标主机， 因此整个系统一般被叫做: `UDP/IP`。
 
 对于信息有序性不敏感（因为消息是 self-contained, 而且通常是短消息）或需要进行多路广播（multi-casting）的应用协议而言，可以使用 UDP 进行通信，如 DNS 协议。
 
-## 使用 Python 进行网络编程
 
+## 使用 Python 进行网络编程
 标准库中的 socket 模块中有一个 `socket()` 函数，用于创建 socket 对象。socket 对象有一组方法，可以实现基于 socket 的网络通信。
 
 - socket() Module Function
 
 使用 `socket.socket()` 函数创建 socket 对象的语法：
 
-`socket(socket_family, socket_type, protocol=0)`
+`socket(family=AF_INET, type=SOCK_STREAM, proto=0, fileno=None)`
 
-socket_family:
+对函数中的参数的说明如下：
+
+family:
 - AF_UNIX
-- AF_INET
+- AF_INET*
+- AF_CAN
+- AF_RDS
 
-socket_type:
+type:
 - SOCK_STREAM
 - SOCK_DGRAM
+- SOCK_RAW
 
-- socket object (Built-in) methods
+proto: 协议编号通常设为 0
+
+fileno: 如果指定了 fileno 的值，则函数的其他参数都将被忽略，将返回这个文件描述符指向的 socket
+
+
+socket object (Built-in) methods
 
 socket 对象常用的方法：
 - server socket methods
-    - s.bind()，对 socket进行地址绑定，(host, port) 
-    - s.listen()，建立并启动 TCP 监听
-    - s.accept()，被动地接收 TCP 客户端连接，在连接到达前一直处于等待中（阻塞）
+    - s.bind(address)，对 socket进行地址绑定，(host, port) 
+    - s.listen([backlog])，建立并启动 TCP 监听
+    - s.accept()，被动地接收 TCP 客户端连接，在连接到达前一直处于等待中（阻塞）, 返回值是一个元组 `(conn, address)`
 - client socket methods
-    - s.connect()，与 TCP server 建立连接
+    - s.connect(address)，与 远程 TCP server 建立连接
     - s.connect_ex(),  发生错误时返回错误码，而不是抛出异常
 - general socket methods
-    TCP
-    - s.recv()
-    - s.send()
-    - s.sendall()
-    UDP
-    - s.recvfrom()
-    - s.sendto()
-    - 
-    - s.getpeername(), 连接到的 TCP socket 的远程地址
-    - s.getsockname()，当前 socket 的地址
-    - s.getsockopt(), 返回给定 socket 选项的值
+    - s.recv(bufsize[, flags]), 从 socket 接收数据，返回值是一个 bytes 对象。一次接收的最大长度由 bufsize 指定, flags 默认为 0
+    - s.send(bytes[, flags]), 向连接到的远程 socket 发送数据，返回值是已发送的字节数
+    - s.sendall(bytes[, flags]), 向连接到的远程 socket 发送数据，直到数据全部发送完毕或发生错误为止。发送成功时返回 None，发生错误时抛出异常。
+    - s.recvfrom(bufsize[, flags]), 从 socket 接收数据，返回值是一个元组 `(bytes, address)`, flags 默认为 0
+    - s.sendto(bytes, address), 向目标 address 的 socket 发送数据，UDP socket 使用
+    - s.getpeername(), 返回连接到的 socket 的远程地址
+    - s.getsockname()，返回当前 socket 的地址
+    - s.getsockopt(level, optname[, buflen]), 返回给定 socket 选项的值
     - s.setsockopt(), 设定 socket 选项的值
     - s.close()，关闭 socket
 - blocking-oriented socket methods
     - s.setblocking()，设置 socket 模式为阻塞或非阻塞
     - s.settimeout()
-    - s.gettimeout()
+    - s.gettimeout(), 返回 socket 操作的超时时间，单位为秒
 - file-oriented socket methods
-    - s.fileno()，socket 的文件描述符
-    - s.makefile(), 创建与 socket 相关联的 文件对象
+    - s.fileno(), 返回 socket 的文件描述符（一个小整数），失败时返回 -1
+    - s.makefile(mode='r', buffering=None,*, encoding=None, errors=None, newline=None), 创建与 socket 相关联的 文件对象
 
 
 ### TCP server/client
