@@ -45,7 +45,9 @@ python 支持上面说的几种地址家族：
 
 在 Python 2.5 中引入了对一类特殊 Linux socket 的支持：`AF_NETLINK` (connectionless)。这种 socket 使用标准的 BSD socket 接口 允许用户代码与内核级代码进行 IPC。
 
-此外， Python 还支持其他地址家族的 socket，具体可以查看 socket 模块的文档。网络编程是指使用 network socket 编写应用程序, 因此以下将只针对 network socket 进行讨论。
+此外， Python 还支持其他地址家族的 socket，具体可以查看 socket 模块的文档。
+
+网络编程是指使用 network socket 编写应用程序, 因此以下将只针对 network socket 进行讨论。
 
 
 ## socket addresses: Host-Port Pairs
@@ -139,10 +141,10 @@ socket 对象常用的方法：
 
 ### TCP server/client
 
-在不同的上下文中， socket 指代着不同的东西，下面对 socket 做以下区分：
+在接下来的讨论中，在不同的上下文中 socket 指代着不同的东西，需要对 socket 做以下区分：
 
 - a "client" socket: an endpoint of a conversation
-- a "server" socket: like a switchboard operator
+- a "server" socket: like a switchboard operator (总机接线员)
 - the client app uses "client" sockets exclusively
 - the web server uses both "server" sockets and "client" sockets
 
@@ -219,7 +221,7 @@ comm_loop:  # 通信循环
     cs.send()/cs.recv()  # 对话
 cs.close()  # 关闭客户端 socket
 ```
-客户端 socket 建立以后，通过使用 `connection()` 方法与服务器建立连接，然后可以与服务器通信。
+客户端 socket 建立以后，通过使用 `connec()` 方法与服务器建立连接，然后可以与服务器通信。
 
 接下来使用 python 程序进行详细讨论：
 
@@ -267,7 +269,7 @@ Disconnecting
 
 严格意义上讲，我们应该在 `close` socket 前先进行 `shutdown` 操作。然而绝大部分 socket 库只需使用一个 `close` 就和 `shutdown(); close()` 一样，因此一般不需显示的使用 `shutdown`
 
-一个显示使用 shutdown 的场景是在进行 HTTP-like 的数据交换时，client 发送一个请求，然后执行 `shutdown(1)` 。 这将告诉服务器“client 已经完成发送， 但仍然可以接收数据”。服务器可以探测到 “EOF”（接收到 0字节），可以确定收到了完整的请求。当服务器发送响应后，实际上，client 仍然处于接收状态（still receiving）
+一个显式使用 shutdown 的场景是在进行 HTTP-like 的数据交换时，client 发送一个请求，然后执行 `shutdown(1)` 。 这将告诉服务器“client 已经完成发送， 但仍然可以接收数据”。服务器可以探测到 “EOF”（接收到 0字节），可以确定收到了完整的请求。当服务器发送响应后，实际上，client 仍然处于接收状态（still receiving）
 
 Please close your sockets when you're done.
 
@@ -279,19 +281,17 @@ When sockets die
 
 Non-blocking sockets
 
-在 python 里 使用 `socket.setblocking(0)` 可以将 socket 设置为 non-blocking 式的。与阻塞式的主要机制上的区别是：
+在 python 里使用 `socket.setblocking(0)` 可以将 socket 设置为 non-blocking 式的。与阻塞式的主要机制上的区别是：
 - `send`, `recv`, `connect`, `accept` 可以在没有做任何工作时就返回
-- 使用 non-blocking sockets 的正确方式是使用 select
+- 使用 non-blocking sockets 的正确方式是使用 `select`
 
 ```python
-
 ready_to_read, ready_to_write, in_error =\
     select.select(
         potential_readers,
         potential_writers,
         potential_errs,
         timeout)
-
 ```
 
 ### UDP server/client
