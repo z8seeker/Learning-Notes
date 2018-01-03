@@ -50,6 +50,28 @@ python 支持上面说的几种地址家族：
 网络编程是指使用 network socket 编写应用程序, 因此以下将只针对 network socket 进行讨论。
 
 
+#### 文件描述符简介
+
+一个文件描述符是一个正整数， 当一个进程打开一个存在的文件，创建一个新文件或创建一个新的套接字的时候，内核返回一个正整数给进程，这个正整数就是文件描述符。 你可能听说过，在 UNIX 中一切皆文件。 内核通过文件描述符来索引一个进程打开的文件。 当你需要读或写一个文件时，你需要用文件描述符来标记它。
+
+默认情况下，UNIX shell 给一个进程的标准输出分配的文件描述符是 0， 标准输入的文件描述符是 1，标准错误的文件描述符是 2。
+
+```python
+import sys
+import os
+
+sys.stdin.fileno()  # 0
+
+sys.stdout.fileno()  # 1
+
+sys.stderr.fileno()  # 2
+
+res = os.write(sys.stdout.fileno(), b'hello\n')  # 'hello'
+
+````
+
+
+
 ## socket addresses: Host-Port Pairs
 一个互联网地址由主机名和端口号组成：
 - 主机名使用 域名或 IP 地址表示
@@ -114,7 +136,7 @@ socket object (Built-in) methods
 socket 对象常用的方法：
 - server socket methods
     - s.bind(address)，对 socket进行地址绑定，(host, port) 
-    - s.listen([backlog])，建立并启动 TCP 监听
+    - s.listen([backlog])，建立并启动 TCP 监听， backlog 参数指定了内核中接入连接请求的队列大小
     - s.accept()，被动地接收 TCP 客户端连接，在连接到达前一直处于等待中（阻塞）, 返回值是一个元组 `(conn, address)`
 - client socket methods
     - s.connect(address)，与 远程 TCP server 建立连接
