@@ -1,6 +1,6 @@
 # 理解 socket
 
-本文讲述什么是 socket，sokcket 的种类以及使用 python 进行 socket 编程的方法，具体包括以下内容：
+本文讲述什么是 socket，sokcket 的种类以及使用 python 进行 socket 编程的方法，具体包括以下内容：
 
 - [什么是 socket](#什么是-socket)
 - [socket 的种类](#socket-的种类)
