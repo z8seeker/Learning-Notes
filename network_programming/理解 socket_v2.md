@@ -31,7 +31,7 @@ sockets 本质上是用于进程间通信的 API，最初由 Berkeley 发明，�
 1. unix domain sockets, 也叫 IPC socket
 2. network sockets, 也叫 Internet socket
 
-在讨论这两种类型的 socket 之前，需要先介绍一下 _文件描述符_ 的概念。
+在讨论这两种类型的 socket 之前，需要先介绍一下 _文件描述符_ 的概念。
 
 一个文件描述符是一个正整数， 当一个进程打开一个存在的文件，创建一个新文件或创建一个新的套接字的时候，内核返回一个正整数给进程，这个正整数就是文件描述符。 你可能听说过，在 UNIX 中一切皆文件。 内核通过文件描述符来索引一个进程打开的文件。 当你需要读或写一个文件时，你需要用文件描述符来标记它。
 
@@ -50,7 +50,7 @@ sys.stderr.fileno()  # 2
 res = os.write(sys.stdout.fileno(), b'hello\n')  # 'hello'
 
 ````
-描述符的概念就介绍到这里，下面继续讨论 socket。
+描述符的概念就介绍到这里，下面继续讨论 socket。
 
 ### unix domain sockets
 
