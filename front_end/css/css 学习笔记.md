@@ -93,11 +93,11 @@
 
 详细描述：
 
-- 如果 `box-sizing` 为默认值， `width`, `min-width`, `max-width`, `height`, `min-height` 与 `max-height` 控制内容大小
-- 内边距区域 padding area 延伸到包围 padding 的边框。如果内容区域 content area 设置了背景、颜色或者图片，这些样式将会延伸到 padding上 (而不仅仅是作用于内容区域)。它位于内边距边界内部, 它的大小为 `padding-box` 宽与 `padding-box` 高
+- 如果 `box-sizing` 为默认值（`content-box`）， `width`, `min-width`, `max-width`, `height`, `min-height` 与 `max-height` 控制内容大小
+- 内边距区域（padding area）延伸到包围 padding 的边框。如果内容区域（content area）设置了背景、颜色或者图片，这些样式将会延伸到 padding上 (而不仅仅是作用于内容区域)。它位于内边距边界内部, 它的大小为 `padding-box` 宽与 `padding-box` 高
 - 内边距与内容边界之间的空间可以由 `padding-top`, `padding-right`, `padding-bottom`, `padding-left` 和简写属性 `padding` 控制。
-- 边框区域 border area 是包含边框的区域，扩展了内边距区域。它位于边框边界内部，大小为 `border-box` 宽和 `border-box` 高。由 `border-width` 及简写属性 `border` 控制。
-- 外边距区域 margin area 用空白区域扩展边框区域，以分开相邻的元素。它的大小为 `margin-box` 的高宽。外边距区域大小由 `margin-top`, `margin-right`, `margin-bottom`, `margin-left` 及简写属性 `margin` 控制。
+- 边框区域（border area）是包含边框的区域，_扩展了内边距区域_。它位于边框边界内部，大小为 `border-box` 宽和 `border-box` 高。由 `border-width` 及简写属性 `border` 控制。
+- 外边距区域（margin area）用空白区域扩展边框区域，以 _分开相邻的元素_。它的大小为 `margin-box` 的高宽。外边距区域大小由 `margin-top`, `margin-right`, `margin-bottom`, `margin-left` 及简写属性 `margin` 控制。
 
 
 ## position
@@ -350,3 +350,47 @@ section {
     margin: 1em;
 }
 ```
+
+使用 `inline-block` 进行布局时，需要注意到一下事项：
+
+- `vertical-align` 属性会影响到 `inline-block` 元素，可以把它的值设为 `top`
+- 还需要设置每一列的宽度
+- 如果 HTML 源代码中元素之间有空格，那么列与列之间会产生空隙
+
+```css
+nav {
+    display: inline-block;
+    vertical-align: top;
+    width: 25%;
+}
+.column {
+    display: inline-block;
+    vertical-align: top;
+    width: 75%;
+}
+```
+
+## column
+
+CSS columns，可以用来轻松实现文字的多列布局：
+
+```css
+.three-column {
+    padding: 1em;
+    -moz-column-count: 3;
+    -moz-column-gap: 1em;
+    -webkit-column-count: 3;
+    -webkit-column-gap: 1em;
+    column-count: 3;
+    column-gap: 1em;
+}
+```
+CSS columns是很新的标准，所以你需要使用前缀。
+
+
+## flexbox
+
+新的 flexbox 布局模式被用来重新定义 CSS 中的布局方式。Flex 是 Flexible Box 的缩写，意为"弹性布局"，用来为盒状模型提供最大的灵活性。
+
+[参考这里的教程](http://www.ruanyifeng.com/blog/2015/07/flex-grammar.html)
+
