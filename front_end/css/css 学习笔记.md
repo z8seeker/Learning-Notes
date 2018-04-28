@@ -394,3 +394,6 @@ CSS columns是很新的标准，所以你需要使用前缀。
 
 [参考这里的教程](http://www.ruanyifeng.com/blog/2015/07/flex-grammar.html)
 
+布局的传统解决方案基于盒状模型，依赖：`display` 属性 + `position` 属性 + `float` 属性
+
+2009年，W3C 提出了一种新的方案----Flex 布局，可以简便、完整、响应式地实现各种页面布局。
