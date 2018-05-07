@@ -117,13 +117,61 @@ Ellipsis 的真值为 true。
 - Tuples
 - Bytes
 
+Strings
+
+A string is a sequence of values that represent Unicode code points. 所有范围在 `U+0000 - U+10FFFF` 内的码点都可以在字符串中表示。
+
+Python 没有字符类型，内建函数：
+- `ord()` 将一个码点从字符串形式转换为一个范围在 `0 - 10FFFF` 之间的整数值；
+- `char()` 将一个范围在 `0 - 10FFFF` 之间的整数值转换为相应的长度为 1 的字符串对象
+
+str 与 bytes 之间的转换：
+
+- `str.encode()`，使用特定编码，将一个 str 对象转换为一个 bytes 对象
+- `btyes.decode()`，可以用来完成相反的操作，将一个 bytes 对象转换为一个 str 对象
+
+Tuples
+
+任何 python 对象都可以作为元组的元素。可以通过在一个表达式后面加逗号形成只有一个元素的元组。一个空元组可以用一对空的小括号表示。
+
+Bytes
+
+字节对象是一个不可变的数组，数组的元素是 8-bit 的字节（由 0 到 255 之间的整数表示）。字节字面量 （b'abc'）和内建函数 `bytes()` 可以创建 字节对象。通过使用 `decode()` 方法，字节对象可以被解码为字符串。
+
+
 #### 2.5.2 Mutable sequences
+
+- Lists
+- Byte Arrays
 
 对于可变序列类型对象，the _subscription and slicing_ notations can be used as the target of assignment and del (delete) statements.
 
+Lists
+
+列表的元素可以是任意 python 对象。
+
+Byte Arrays
+
+一个 bytearray 对象是一个可变的数组，由内建函数 `bytearray()` 进行创建。除了是可变的（因此也是不可hash 的），字节数组与不可变的字节对象有相同的接口和功能。
+
+此外，标准库里 collections 模块还提供了一种可变的序列类型： `array`
 
 
 ### 2.6 Set types
+
+集合类型表示 unordered, finite sets of unique, immutable objects. 因此，集合类型不能被索引。集合类型对象可以被迭代，内建函数 `len()` 返回集中中的元素个数。集合常见的使用场景包括：
+
+- fast membership testing
+- removing duplicates from a sequence
+- computing mathematical operation，such as intersection，union， difference，and symmetric difference
+
+对于集合元素，the same immutability rules apply as for dictionary keys。需要注意的是，数值类型遵循一般的数值比较规则：如果两个数相等（1 与 1.0），则只有一个数允许存在集合中。
+
+目前，python 固有两种集合类型：
+
+- Sets，可变的集合类型，由内建函数 `set()` 创建，创建后可以进行修改
+- Frozen Sets，不可变的集合类型，由内建函数 `frozenset()` 创建，可以作为其他集合对象的元素或作为字典的键
+
 
 ### 2.7 Mappings
 
