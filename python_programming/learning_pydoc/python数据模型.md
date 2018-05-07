@@ -22,14 +22,16 @@ Every object has an identity, a type and a value:
 python 中的对象不会被显式的销毁，但当对象不可获得时（unreachable）会被垃圾回收：
 
 - CPython uses a _reference-counting_ scheme with (optional) delayed detection of _cyclically linked garbage_
+  - 这意味着 python 可以立刻回收不再被引用的对象（引用计数为零）
+  - 而对有循环依赖的垃圾，则不一定会保证立刻回收，可以参考 gc 模块
 - the use of the implementation's tracing or debugging facilities may keep objects alive that would normally be collectable
 - catching an exception with a `try...except` statement may keep objects alive
 
 某些对象可能包含对外部资源的引用，例如打开的文件或窗口等，当这些对象被垃圾回收时会释放这些资源，但因为不一定确保会发生垃圾回收，所以这些对象应该提供显式的方法（`close()`） 释放外部资源。这可以结合 `try...finally` 和 `with` 语句方便的实现。
 
-某些对象会包含对其他对象的引用，因此也叫做容器， container，比如： tuples，lists 和 dict。当我们讨论容器的值时，我们是对被容器包含的对象的值而言的；而但我们讨论容器是否可变时（mutability），我们是对被容器包含的对象的 identity 而言的。所以如果一个 tuple 包含一个对可变对象的引用，那这个 tuple 的值是会改变的，只要那个相应的可变对象改变。
+某些对象会包含对其他对象的引用，因此也叫做容器， container，比如： tuples，lists 和 dict。当我们讨论容器的值时，我们是对针对容器说包含的对象的值而言的；而当我们讨论容器是否可变时（mutability），我们是针对容器所包含的对象的 identity 而言的。所以如果一个 tuple 包含一个对可变对象的引用，那这个 tuple 的值是会改变的，只要那个相应的可变对象改变。
 
-Types affect almost all aspects of object behavior. Even the importance of object identity is affected in some sense: for immutable types, operations that compute new values may actually return a reference to any existing object eith the same type and value, while for mutable objects this is not allowed.
+Types affect almost all aspects of object behavior. Even the importance of object identity is affected in some sense: for immutable types, operations that compute new values may actually return a reference to any existing object with the same type and value, while for mutable objects this is not allowed.
 
 ```python
 a = 1
@@ -42,34 +44,101 @@ c is d // False
 ```
 
 ## 2. The standard type hierarchy
-Below is a list of the types that are built into Python:
 
-- None
-This type has a single value. There is a single object with this value.
+python 有以下内建类型：
 
-It is accessed through the built-in name `None` and used to signify the absence of a value in many situations.
+### 2.1 None
+This type has _a single value_. There is _a single object_ with this value.
 
-- NotImplemented
+It is accessed through the built-in name `None` and used to signify the absence of a value in many situations，比如当函数没有显式的返回任何值时将返回 None。
 
-This type has a single value. There is a single object with this value.
+None 的真值为 false。
+
+### 2.2 NotImplemented
+
+This type has _a single value_. There is _a single object_ with this value.
 
 It is accessed through the built-in name `NotImplemented`. Numeric methods and rich comparison methods should return this value if they do not implement the operation for the operands provided.
 
-- Ellipsis
-This type has a single value. There is a single object with this value. 
+NotImplemented 的真值为 true。
+
+### 2.3 Ellipsis
+
+This type has _a single value_. There is _a single object_ with this value. 
 
 This object is accessed through the literal `...` or the built-in name `Ellipsis`.
 
-- numbers.Number
-- Sequences
-- Set types
-- Mappings
-- Callable types
-- Modules
-- Custom classes
-- Class instances
-- I/O objects (file objects)
-- Internal types
+Ellipsis 的真值为 true。
+
+### 2.4 numbers.Number
+
+数值类型由数值字面量创建，数值类型对象是不可变对象。python 中的数值类型又可分为：
+
+- numbers.Integral
+- numbers.Real (float)
+- numbers.Complex (complex)
+
+#### 2.4.1 numbers.Integral
+
+这种类型表示数学中的整数值（正整数和负整数），整数又可分为：
+
+- Integers（int）
+  - 这种类型可以表示无限大的范围（只要有足够的内存）
+- Booleans (bool)
+  - 这种类型表示真值：False 和 True
+  - Boolean 类型对象只有两个对象，分别用于表示 False 和 True
+  - Boolean 类型是整数类型的子类型
+  - 几乎所有情况下，布尔值的行为分别与整数值 0 和 1 类似，唯一的例外是当布尔值被转换为字符串时，将会返回 "False" 或 "True"
+
+#### 2.4.2 numbers.Real (float)
+
+这种类型表示机器级（machine-level）的双精度浮点数。Python 不支持单精度的浮点数。
+
+#### 2.4.3 numbers.Complex
+
+这种类型使用一对双精度浮点数来表示一个复数。一个复数 `z` 的实部和虚部可以通过复数对象的只读属性 `z.real` `z.imag` 得到。
+
+### 2.5 Sequences
+
+序列类型表示有序的有限集合，并由非负整数进行索引。内建的 `len()` 函数返回序列的长度。当序列的长度为 n 时，这个序列的索引集合包括 `0, 1, ..., n-1`，序列的第 i 个元素可由 `a[i]` 得到。
+
+序列类型也支持切片操作：`a[i:j]` 。当切片作为表达式使用时，一个切片的结果是一个同类型的序列
+
+一些序列类型也支持扩展的切片操作： `a[i:j:k]`，第三个参数表示步长，会选择序列中所有满足这样条件的元素 `x`：`x = i + n*k, n>=0 and i<= x < j`
+
+以值是否可变为依据，序列类型又可分为：
+
+- immutable sequences
+- mutable sequences
+
+#### 2.5.1 Immutable sequences
+
+- Strings
+- Tuples
+- Bytes
+
+#### 2.5.2 Mutable sequences
+
+对于可变序列类型对象，the _subscription and slicing_ notations can be used as the target of assignment and del (delete) statements.
+
+
+
+### 2.6 Set types
+
+### 2.7 Mappings
+
+### 2.8 Callable types
+
+### 2.9 Modules
+
+### 2.10 Custom classes
+
+### 2.11 Class instances
+
+### 2.12 I/O objects (file objects)
+
+### 2.13 Internal types
+
 
 ## 3. Special method names
 
