@@ -175,6 +175,9 @@ Byte Arrays
 
 ### 2.7 Mappings
 
+映射类型表示 finite sets of objects indexed by arbitrary index sets
+
+
 ### 2.8 Callable types
 
 ### 2.9 Modules
