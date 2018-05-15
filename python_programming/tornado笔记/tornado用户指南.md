@@ -301,6 +301,13 @@ def minute_loop2():
 
 ##  Queue example - 一个并发的网络爬虫
 
+Tornado 的 `tornado.queues` 模块，模拟标准库中用于实现线程的生产者/消费者模型的 `queue` 模块，实现了一个用于协程的异步生产者/消费者模型。
+
+ 当一个协程在产出 `Queue.get` 时会暂停，直到队列里有东西时为止。如果队列已满，当一个协程在产出 `Queue.put` 时会暂停，直到队列里有空间为止。
+
+ 一个 `Queue` 维护着一定数目未完成的任务，which begins at zero. `put` increments the count; `task_done` decrements it.
+
+
 
 ## tornado 网络应用的例子
 
