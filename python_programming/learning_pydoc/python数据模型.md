@@ -175,10 +175,38 @@ Byte Arrays
 
 ### 2.7 Mappings
 
-映射类型表示 finite sets of objects indexed by arbitrary index sets
+映射类型表示 finite sets of objects indexed by arbitrary index sets。内建函数 `len()` 返回一个映射类型的元素数目。目前 python 里有一种固有映射类型：字典。
+
+字典
+
+不能作为字典键的类型包括列表，字典或者其他可变类型，之所以有这样的限制，是因为字典需要键的 hash 值为一个常量。
+
+扩展模块 `dbm.ndbm` 和 `dbm.gnu` 以及 `collections` 模块还提供了其他的映射类型。
 
 
 ### 2.8 Callable types
+
+可调用类型可以执行函数调用操作。
+
+User-defined functions
+
+用户定义函数对象是由函数定义创建的，它有一些特别的属性：
+
+- `__doc__`，可写属性。函数的文档字符串，当 unavalilable 时 为 None，不会被子类继承。
+- `__name__`，可写属性。函数的名字
+- `__qualname__`，可写属性。函数的 qualified name
+- `__module__`，可写属性。函数被定义所在的模块名
+- `__defaults__`，可写属性。一个元组包含默认的参数值，若没有默认参数值时为 None
+- `__code__`，可写属性。一个表示编译后的函数体的 code object
+- `__globals__`，只读属性。对一个包含函数中全局变量字典的引用。
+- `__dict__`，可写属性。一个字典，包含了任意函数属性的命名空间
+- `__closure__`，只读属性。 None 或 a tuple of cells 包含这个函数的自由变量的绑定
+- `__annotations__`，可写属性。一个字典，包含着参数的注解，字典的键名为参数名，`return` 表示返回值的注解。
+- `__kwdefaults__`，可写属性。一个字典，只包含默认的关键字参数。
+
+绝大多数可写属性在被赋值时，会进行类型检查。
+
+函数对象也支持 getting and setting arbitrary attributes，可以用来附加一些元数据。需要注意的是，当前的 python 实现只对用户定义的函数支持函数属性，而内建函数目前还没有支持。
 
 ### 2.9 Modules
 
