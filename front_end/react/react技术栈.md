@@ -263,7 +263,7 @@ Flux 只是一个概念，有 30 多种实现，目前最流行的两个 React �
 - MobX：响应式（Reactive）管理，state 是可变对象，适合中小型项目
 - Redux：函数式（Functional）管理，state 是不可变对象，适合大型项目
 
-React 架构的最重要作用就是管理 Store 与 View 之间的关系。
+React 架构的最重要作用就是 _管理 Store 与 View 之间的关系_。
 
 ## MobX 简介
 
@@ -410,3 +410,4 @@ ReactDOM.render(
 );
 ```
 为了把 `Store` 传入组件，必须使用 `Redux` 提供的 `Provider` 组件在应用的最外面，包裹一层。
+
