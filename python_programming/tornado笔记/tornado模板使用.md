@@ -1,5 +1,7 @@
 # 使用 tornado 的模板
 
+阅读 intoducing to tornado 笔记
+
 ## 基本语法
 
 在模板中使用 python 表达式：
