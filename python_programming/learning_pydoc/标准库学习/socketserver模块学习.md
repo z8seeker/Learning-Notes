@@ -89,7 +89,7 @@ Request Handlers 接收从远端传来的数据，进行处理并生成响应返
 ## 服务器类与 MixIn 机制
 
 
-### class BaseServer 类
+### BaseServer 类
 
 模块中的其他服务器类都直接或间接继承 BaseServer, BaseServer 类定义了处理请求的 API。BaseServer 的构造函数 `__init__` 需要传入两个参数：
 
@@ -305,3 +305,54 @@ ThreadingMixIn 类设置有一个类变量：
       - `handle_error(request, client_address)`,  与 BaseServer 中的一致
       - `shutdown_request(request)`, 与 TCPServer 或 UDPServer 中的一致
 
+
+### 多进程服务器
+
+通过继承 ForkingMixIn 类可以实现多进程服务器：
+
+```python
+ForkingUDPServer(ForkingMixIn, UDPServer): pass
+ForkingTCPServer(ForkingMixIn, TCPServer): pass
+```
+
+
+### 多线程服务器
+
+通过继承 ThreadingMixIn 类可以实现多线程服务器：
+
+```python
+ThreadingUDPServer(ThreadingMixIn, UDPServer): pass
+ThreadingTCPServer(ThreadingMixIn, TCPServer): pass
+```
+
+如果为 UNIX-like 系统，还定义有 `UnixStreamServer`, `UnixDatagramServer`。并通过继承 ThreadingMixIn 类，实现了基于 Unix socket 的多线程服务器：
+
+```python
+ThreadingUnixStreamServer(ThreadingMixIn, UnixStreamServer): pass
+ThreadingUnixDatagramServer(ThreadingMixIn, UnixDatagramServer): pass
+```
+
+## 请求处理类
+
+服务器类负责监听连接，然后在 `finish_request(Request, client_address)` 方法里调用请求处理类，请求处理类负责具体的业务逻辑处理。
+
+### BaseRequestHandler
+
+BaseRequestHandler 的 `__init__()` 方法需要传入 request（也即是 client socket）, client_address, server 三个参数，这个方法的处理逻辑如下：
+
+```python
+self.setup()
+try:
+    self.handle()
+finally:
+    self.finish()
+```
+
+可以看到真正的处理逻辑都需要封装在 `handle()` 方法里。
+
+
+### StreamRequestHandler
+
+
+
+### DatagramRequestHandler
