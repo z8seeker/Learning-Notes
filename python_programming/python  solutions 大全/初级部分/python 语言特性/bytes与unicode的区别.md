@@ -2,8 +2,10 @@
 
 python3
 
-- bytes, 二进制字节 
-- str, Unicode 字符
+- bytes, 8位的二进制字节序列 
+- str, Unicode 字符序列
+
+
 
 python2
 
@@ -48,6 +50,8 @@ python2 中的处理方法与 python3 类似。
 
 注意：
 
+- 在 python3 中 bytes 实例和 str 实例之间不能使用操作符（>, +）
+- 在 python2 中如果 str 实例只包含7位的二进制字符，则可以和 unicode 之间使用操作符
 python3 中如果通过内置的 open 函数获取文件句柄，该句柄默认会采取 UTF-8 编码格式来操作文件（python2 中默认采取二进制形式）。这样在文件句柄上进行 read 和 write 操作时，必须传入包含 Unicode 字符的 str 实例，而不能是 bytes 实例。
 
 同时适配 python2 与 python3:
