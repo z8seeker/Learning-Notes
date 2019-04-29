@@ -49,4 +49,3 @@ class LazyDB(object):
 
 
 若需要在 `__getsttribute__` 和 `__setattr__` 方法中访问示例属性，应该直接通过 `super()` 进行操作，以避免无限递归。
-
