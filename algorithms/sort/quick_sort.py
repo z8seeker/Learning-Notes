@@ -31,8 +31,6 @@ def partition(alist, left, right):
     #         alist[j], alist[i] = alist[i], alist[j]
     #         i -= 1
     # alist[i], alist[left] = alist[left], alist[i]
-    print(alist)
-    print(left, i, right)
     return i
 
 
@@ -48,14 +46,14 @@ def find_k(alist, left, right, k):
     pivot = partition(alist, left, right)
     if len(alist) - pivot == k:
         return pivot
-    if len(alist) - pivot > k:
+    elif len(alist) - pivot > k:
         return find_k(alist, pivot+1, right, k)
     else:
         return find_k(alist, left, pivot-1, k)
 
 
 if __name__ == '__main__':
-    a = [2, 1, 5, 4, 6, 3]
+    a = [2, 1, 5, 7, 6, 3, 12]
     # quick_sort(a)
     k = big_k(a, 4)
     print(k)
