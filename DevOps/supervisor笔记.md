@@ -56,4 +56,3 @@ programs=program1, program2    ; each refers to 'x' in [program: x] definitions
 当添加了上述配置后，progname1 和 progname2 的进程名就会变成 `thegroupname:progname1` 和 `thegroupname:progname2` 以后就要用这个名字来管理进程了，而不是之前的 progname1 。
 
 执行 `supervisorctl stop thegroupname:*` 就能同时结束 progname1 和 progname2，执行 `supervisorctl stop thegroupname:progname1` 就能结束 progname1
-
