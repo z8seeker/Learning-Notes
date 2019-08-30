@@ -19,3 +19,143 @@
 监控的细分：
 
 以往是根据 API 监控服务器性能和负载，现在整个 GraphQL 只有一个入口，需要跟踪每个 resolver 行为的效率。
+
+
+## graphene 中的类型
+
+### Schema
+
+schema 定义了 GraphQL API 的类型系统，描述了客户端能够获取到的数据集合（对象，字段，关系等）。来自客户端的调用首先会被验证 query 是否合法，然后再执行这个 query。客户端可以通过自省（type introspection）获取 schema 的信息。
+
+
+```python
+my_schema = Schema(
+    query=MyRootQuery.
+    mutation=MyRootMutation,
+    subscription=MyRootSubscription
+)
+```
+
+Auto CamelCase field names
+
+默认情况下，所有的字段和参数名（只要没有显式设置 `name`）都将从 `snake_case` 转换到 `camelCase`。
+to disable this behavior, set the `auto_camelcase` to `False` upon schema instantiation:
+
+```python
+my_schema = Schema(
+    query=MyRootQuery,
+    auto_camelcase=False,
+)
+```
+
+### Scalars
+
+graphene 中所有的标量类型都接受以下参数，所有的都是可选的：
+
+- name, 字符串，覆写字段的名称
+- description, 字符串，在 GraphiQL browser 中显示该类型的描述信息
+- required, 布尔值，若为 `True` 则该字段是必须的
+- deprecation_reason, 字符串，为这个字段提供弃用原因
+- default_value, 为这个字段提供一个默认值
+
+graphene 定义了以下几种基本标量类型：
+
+- `graphene.String`, 文本数据
+- `graphene.Int`, 有符号的 32 位整数
+- `graphene.Float`, 有符号的双精度分数值
+- `graphene.Boolean`, 布尔值
+- `graphene.ID`, 表示一个 unique identifier, 在 JSON 响应中是字符串，而在作为输入类型时既可以是字符串也可以是整数
+- `graphene.types.datetime.Date`, 日期数值（iso8601）
+- `graphene.types.datetime.DateTime`, DateTime 数值 (iso8601)
+- `graphene.types.datetime.Time`, 时间数值（iso8601)
+- `graphene.types.json.JSONString`, JSON 字符串
+
+
+定制标量类型
+
+使用标量类型（Mounting Scalars）
+
+标量可以在 `ObjectType`, `Interface` 或者 `Mutation` 里作为字段使用:
+
+```python
+class Person(graphene.ObjectType):
+    name = graphene.String()
+
+# 或者
+class Person(graphene.ObjectType):
+    name = graphene.Field(graphene.String)
+
+# 在一个字段中使用 Types 时，是作为参数存在的
+graphene.Field(graphene.String, to=graphene.String())
+
+# 或者
+graphene.Field(graphene.String, to=graphene.Argument(graphene.String))
+```
+
+### Lists and Non-Null
+
+在 graphene 中只能定义对象类型，标量类型和枚举类型。可以使用类型修饰符（type modifiers）来验证相应的字段值。
+
+```python
+import graphene
+
+class Character(graphene.ObjectType):
+    name = graphene.NonNull(graphene.String)
+
+# 等价于
+class Character(graphene.ObjectType):
+    name = graphene.String(required=True)
+
+# List
+class Charachter(graphene.ObjectType):
+    appears_in = graphene.List(graphene.String)
+
+# NonNull Lists
+class Character(graphene.ObjectType):
+    appears_in = graphene.List(graphene.NonNull(graphene.String))
+
+```
+
+### ObjectType
+
+graphene 中的 _ObjectType_ 用来定义字段之间的关系：
+
+- 每一个 `ObjectType` 都继承自 `graphene.ObjectType`
+- `ObjectType` 的每个属性都表示一个字段
+- 每个字段都有一个 `resolver method` 用来获取数据
+
+### Resolvers
+
+Resolver 是一个方法，用来响应查询，获取 Schema 中相应字段的数据。 Resolvers 是惰性执行的，如果查询里不包括某个字段，则相应的 resolver 方法就不会执行。
+
+Resolver 方法接受以下参数：
+
+- Parent Value Object (parent), for the value object use to resolve most fields
+- GraphQL Execution Info (info), query 和 schema 的元信息，以及请求上下文
+- GraphQL Arguments (**kwargs), 定义在字段上的参数
+
+Parent Value Object (parent)，是 resolver 方法的第一个参数，它的值是父字段（parent field）的 resolver 方法的返回值，如果没有父字段，它的值就是 `root_value` (可配置的值，默认为 `None`)。
+
+```python
+import graphene
+
+class Person(graphene.ObjectType):
+    full_name = graphene.String()
+
+    def resolve_full_name(parent, info):
+        return f"{parent.first_name} {parent.last_name}"
+
+class Query(graphene.ObjectType):
+    me = graphene.Field(Person)
+
+    def resolve_me(parent, info):
+        # return an object that represents a Person
+        return get_human(name="Luke Skywalker")
+
+schema = Schema(query=Query)
+
+query_string = "{me { fullName }}"
+result = schema.execute(query_string)
+assert result["data"]["me"] == {"fullName": "Luke Skywalker"}
+```
+

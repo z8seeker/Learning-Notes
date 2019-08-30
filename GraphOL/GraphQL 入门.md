@@ -117,4 +117,3 @@ GraphQL clients have emerged to speed the workflow for developer teams and impro
 Relay is Facebook’s client that works with React and React Native.
 
 Apollo Client supports all major frontend development platforms and is framework agnostic.
-
