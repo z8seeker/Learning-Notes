@@ -135,7 +135,7 @@ Go 内置有一个 `error` 类型，专门用来处理错误信息，Go 的 pack
 ```go
 err := errors.New("emit macho dwarf: elf header corrupted")
 if err != nil {
-    fmt.Print(err)
+    fmt.Print(err)  # 不能使用 fmt.Printf
 }
 ```
 
