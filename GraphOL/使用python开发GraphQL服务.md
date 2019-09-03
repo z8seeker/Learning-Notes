@@ -124,7 +124,7 @@ graphene 中的 _ObjectType_ 用来定义字段之间的关系：
 - `ObjectType` 的每个属性都表示一个字段
 - 每个字段都有一个 `resolver method` 用来获取数据
 
-### Resolvers
+#### Resolvers
 
 Resolver 是一个方法，用来响应查询，获取 Schema 中相应字段的数据。 Resolvers 是惰性执行的，如果查询里不包括某个字段，则相应的 resolver 方法就不会执行。
 
@@ -132,7 +132,7 @@ Resolver 方法接受以下参数：
 
 - Parent Value Object (parent), for the value object use to resolve most fields
 - GraphQL Execution Info (info), query 和 schema 的元信息，以及请求上下文
-- GraphQL Arguments (**kwargs), 定义在字段上的参数
+- GraphQL Arguments (**kwargs), 定义在字段上的参数，作为关键字参数传递给 resolver 函数
 
 Parent Value Object (parent)，是 resolver 方法的第一个参数，它的值是父字段（parent field）的 resolver 方法的返回值，如果没有父字段，它的值就是 `root_value` (可配置的值，默认为 `None`)。
 
@@ -159,3 +159,130 @@ result = schema.execute(query_string)
 assert result["data"]["me"] == {"fullName": "Luke Skywalker"}
 ```
 
+```python
+import graphene
+
+class Query(graphene.ObjectType):
+    human_by_name = Field(Human, name=String(required=True))
+
+    def resolve_human_by_name(parent, info, name):
+        return get_human(name=name)
+
+"""
+    query {
+        humanByName(name: "Luke Skywalker") {
+            firstName
+            lastName
+        }
+    }
+"""
+```
+
+#### Graphene Resolvers 的特性
+
+- Implicit staticmethod
+- Default Resolver
+
+graphene 会把所有的 reslover 方法当作静态方法进行处理，因此 reslover 方法的第一个参数永远不会是 `self`， 而是 `Parent Value Object`。这样处理是因为在 GraphQL 中，当 resolve 查询时我们往往更关心对象的 parent value object 而不是这个对象自身的属性。
+
+如果 `ObjectType` 的字段没有定义 resolver 方法， Graphene 会提供一个默认的 resolver，如果 Parent Value Object (parent) 是一个字典，resolver 会查找对应的 key，否则 resolver 会查找对应的属性。
+
+### 设置默认的 GraphQL 参数
+
+```python
+import graphene
+
+class Query(graphene.ObjectType):
+    hello = String(required=True, name=graphene.String())
+
+    def resolve_hello(parent, info, name):
+        return name if name else "World"
+    
+    # set default by combining all keyword arguments into a dict
+    def reslove_hello(parent, info, **kwargs):
+        name = kwargs.get("name", "World")
+        return f"Hello, {name}!"
+    
+    # or by setting a default value for the keyword argument
+    def resolve_hello(parent, info, name="World"):
+        return f"Hello, {name}!"
+
+# or set a default value for an Argument in the GraphQL schema itself
+class Query(graphene.ObjectType):
+    hello = graphene.String(required=True, name=graphene.String(default_value="World"))
+
+    def resolve_hello(parent, info, name):
+        return f"Hello, {name}!"
+```
+
+#### 在类外面写 Resolvers
+
+```python
+import graphene
+
+def resolve_full_name(person, info):
+    return "{} {}".format(person.first_name, person.last_name)
+
+class Person(graphene.ObjectType):
+    first_name = String()
+    last_name = String()
+    full_name = String(resolver=resolver_full_name)
+```
+
+#### 配置 ObjectType - 元类
+
+Graphene 使用 `Meta inner class` 对 `ObjectType` 作不同的设置:
+
+- 类型名
+- 类型描述
+- 接口 （和 possible types）
+
+```python
+import graphene
+
+Song = namedtuple("Song", ('title', 'artist'))
+
+class MyGraphQLSong(ObjectType):
+    ''' We can set the schema description for an Object Type here on a docstring '''
+    class Meta:
+        name = "Song"  # set type name to Song
+        description = '''But if we set the description in Meta, this value is used instead'''  # set type description
+        interface = (graphene.Node, )
+        possible_types = (Song, )
+```
+
+### Enums
+
+definition:
+
+```python
+import graphene
+
+class Episode(graphene.Enum):
+    NEWHOPE = 4
+    EMPIRE = 5
+    JEDI = 6
+
+    # value descriptions
+    @property
+    def description(self):
+        if self == Episode.NEWHOPE:
+            return "NEW HOPE EPISODE"
+        return "Other episode"
+
+# or using instances of Enum
+Episode = graphene.Enum("Episode", [("NEWHOPE", 4), ("EMPIRE", 5), ("JEDI", 6)])
+```
+
+Graphene 中的 `Enum` 类在内部使用标准库的 `enum.Enum` 实现，但在获取成员时稍有区别：
+
+```python
+from graphene import Enum
+
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+
+assert Color.get(1) == Color.RED
+```
