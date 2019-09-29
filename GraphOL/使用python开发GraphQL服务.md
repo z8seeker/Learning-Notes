@@ -20,7 +20,6 @@
 
 以往是根据 API 监控服务器性能和负载，现在整个 GraphQL 只有一个入口，需要跟踪每个 resolver 行为的效率。
 
-
 ## graphene 中的类型
 
 ### Schema
@@ -286,3 +285,203 @@ class Color(Enum):
 
 assert Color.get(1) == Color.RED
 ```
+
+### Interfaces
+
+接口是一种抽象类型，它包含了一组字段。为了实现这个接口，相应的类型也必须包含这些字段。
+
+```python
+import graphene
+
+class Character(graphene.interface):
+    id = graphene.ID(required=True)
+    name = graphene.String(required=True)
+    friends = graphene.List(lambda: Character)
+
+
+class Droid(graphene.ObjectType):
+    class Meta:
+        interfaces = (Character, )
+    
+    primary_function = graphene.String()
+
+class Query(grphene.ObjectType):
+    hero = graphene.Field(Character, required=True, epidsode=grapee=graphene.Int(required=True))
+
+    def resolve_hero(root, info, episode):
+        if episode = 5:
+            return get_human(name='Luke skywalk')
+
+schema = graphnene.Schema(query=Query, types=[Droid])
+```
+
+当需要返回不同类型的对象集合时。使用接口是很有用的。
+
+#### Resolving data objects to types
+
+在接口中定义 `resolve_type` 类方法，将数据对象映射为一个 Graphene 类型：
+
+```python
+import graphene
+class Character(graphene.Interface):
+    id = graphene.ID(required=True)
+    name = graphene.String(required=True)
+
+    @classmethod
+    def resolve_type(cls, instance, info):
+        if instance.type == 'DROID':
+            return Droid
+        return Human
+```
+
+
+### Unions
+
+每一个 Union 对象都是继承自 `graphene.Union` 的 python 类。Union 类型自身不含有任何字段，只是链接到相应的 object types。这些被链接到的 object types 必须是具体的类型，而不能是 interface 或 Union 类型。
+
+```python
+import graphene
+
+class Human(graphene.ObjectType):
+    name = graphene.String()
+    born_in = graphene.string()
+
+class Droid(graphene.ObjectType):
+    name = graphene.String()
+    primary_function = graphene.String()
+
+class SearchResult(graphene.Union):
+    class Meta:
+        types = (Human, Droid, Starship)
+
+```
+
+### Mutations
+
+Mutation 是一种特殊的 ObjectType，定义有 Input
+
+```python
+import graphene
+
+class CreatePerson(graphene.Mutation):
+    class Arguments:
+        name = graphene.String()
+    
+    ok = graphene.Boolean()
+    person = graphene.Field(lambda: Person)
+
+    def mutate(root, info, name):
+        person = Person(name=name)
+        ok = True
+        return CreatePerson(person=person, ok=ok)
+
+class Person(graphene.ObjectType):
+    name = graphene.String()
+    age = graphene.Int()
+
+class MyMutations(graphene.ObjectType):
+    create_person = CreatePerson.Field()
+
+# We must define a query for our schema
+class Query(graphene.ObjectType):
+    person = graphene.Field(Person)
+
+schema = graphene.Schema(query=Query, mutation=MyMutations)
+```
+
+#### InputFields 和 InputObjectTypes
+
+定义 InuptObjectType 指定提交数据的结构，然后可以在 Mutation 类型中使用相应的 InputFields。InputObjectTypes 类型在定义时允许嵌套，方便构造复杂的输入数据（input data）：
+
+```python
+import graphene
+
+class LatLngInput(graphene.InputObjectType):
+    lat = graphene.Float()
+    lng = graphene.Float()
+
+class LocationInput(graphene.InputObjectType):
+    name = graphene.String()
+    latlng = graphene.InputField(LatLngInput)
+```
+
+#### Output type
+
+如果要返回一个已存在的对象类型，而不需指定特定的 mutation 类型，可以直接设置 Output 属性：
+
+```python
+import graphene
+
+class CreatePerson(graphene.Mutation):
+    class Arguments:
+        name = graphene.String()
+
+    Output = Person
+
+    def mutate(root, info, name):
+        return Person(name=name)
+```
+
+### AbstractTypes
+
+AbstractType 中包含的字段可以在 ObjectType, Interface, InputObjectType, 或其他 AbstractType 中共享：
+
+```python
+import graphene
+
+class UserFields(graphene.AbstractType):
+    name = graphene.String()
+
+class User(graphene.ObjectType, UserFields):
+    pass
+
+class UserInput(graphene.InputObjectType, UserFields):
+    pass
+```
+
+## graphene 查询的执行过程
+
+执行一个查询时，可直接调用 Schema 的 execute 方法：
+
+```python
+from graphene import Schema
+
+schema = Schema(...)
+result = schema.execute('{ name }')
+```
+
+`result.data` 是查询的执行结果，`result.errors` 保存的是错误信息（None 或 非空 list）
+
+### Context（上下文）
+
+可以通过 context 参数向查询传递上下文信息：
+
+```python
+import graphene
+
+class Query(graphene.ObjectType):
+    name = graphene.String()
+
+    def resolve_name(root, info):
+        return info.context.get('name')
+
+schema = Schema(Query)
+result = Schema.execute('{ name }', context={'name': 'Syrus'})
+```
+
+### Variables
+
+通过 variables 参数向查询传递变量信息：
+
+```python
+result = Schema.execute('...', variables={'id': 12})
+```
+
+### Root Value
+
+通过 root 参数可以覆写 root queries 和 mutations 中的 Parent Value Object。
+
+### Operation Name
+
+如果一个查询中包含多个查询操作，可以指定 `operation_name` 来指明需要执行哪个操作。
+
