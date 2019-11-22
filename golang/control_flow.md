@@ -198,7 +198,7 @@ func SumAndProduct(A, B int) (add int, Multiplied int) {
 接受变参的函数是有着不定数量的参数的。为了做到这点，首先需要定义函数使其接受变参：
 
 ```go
-func myfunc(arg ...int) {
+func myfunc(arg ...int) {  // 此处的 arg 是容器类型， 是一个 slice
     for _, n := range arg {
         fmt.Printf("And the number is: %d\n", n)
     }
@@ -233,7 +233,7 @@ func add2(a *int) int {
 
 - 传指针使得多个函数能操作同一个对象。
 - 传指针比较轻量级 (8 bytes),只是传内存地址，我们可以用指针传递体积大的结构体。如果用参数值传递的话, 在每次 copy 上面就会花费相对较多的系统开销（内存和时间）。所以当你要传递大的结构体的时候，用指针是一个明智的选择。
-- Go 语言中 `channel`，`slice`，`map` 这三种类型的实现机制类似指针，所以可以直接传递，而不用取地址后传递指针。（注：若函数需改变 `slice` 的长度，则仍需要取地址传递指针）
+- Go 语言中 `channel`，`slice`，`map` 这三种类型的实现机制类似指针，所以可以直接传递，而不用取地址后传递指针。（注：若函数需改变 `slice` 的长度，则仍需要取地址传递指针, 待确认）
 
 ### defer
 
