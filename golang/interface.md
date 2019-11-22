@@ -30,9 +30,11 @@ a = s
 
 ## 反射
 
-反射就是能检查程序在运行时的状态，用到的包是 reflect:
+反射就是能检查程序在运行时的状态，并可动态操作对象，用到的包是 reflect:
 
 ```go
 t := reflect.TypeOf(i)  // 得到类型的元信息
 v := reflect.ValueOf(i)  // 得到实际的值
 ```
+
+反射最常见的应用场景是做对象的序列化 （Marshal & Unmarshal）
