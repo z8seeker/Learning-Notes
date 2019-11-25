@@ -33,6 +33,18 @@ if integer == 3 {
 }
 ```
 
+在有返回值的函数中，不允许将 “最终的” 的 return 语句包含在 `if...else...` 结构中，否则会编译失败。编译失败的案例如下：
+
+```go
+func example(x int) int {
+    if x == 0 {
+        return 5
+    } else {
+        return x
+    }
+}
+```
+
 ### switch
 
 switch 语法格式如下：
@@ -59,6 +71,7 @@ i := 10
 switch i {
     case 1:
         fmt.Println("i is equal to 1")
+    // 单个 case 语句中可以出现多个结果选项
     case 2, 3, 4:
         fmt.Println("i is equal to 2, 3 or 4")
     case 5:
@@ -202,6 +215,10 @@ func myfunc(arg ...int) {  // 此处的 arg 是容器类型， 是一个 slice
     for _, n := range arg {
         fmt.Printf("And the number is: %d\n", n)
     }
+}
+
+func anytypefunc(args ...interface{}) {  // 接受任意类型的任意数量个参数
+
 }
 ```
 

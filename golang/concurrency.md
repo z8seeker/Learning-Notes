@@ -68,4 +68,3 @@ runtime 包中有几个处理 goroutine 的函数：
 - `NumCPU`， 返回 CPU 核数量
 - `NumGoroutine`，返回正在执行和排队的任务总数
 - `GOMAXPROCS`，用来设置可以并行计算的 CPU 核数的最大值，并返回之前的值。
-

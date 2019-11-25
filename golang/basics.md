@@ -378,10 +378,11 @@ if ok {
     fmt.Println("We have no rating accociated with C# in the map")
 }
 
+// 元素删除
 delete(rating, "C")  // 删除 key 为 C 的元素
 ```
 
-map 和其他基本型别不同，它不是 thread-safe，在多个 go-routine 存取时，必须使用 mutex lock 机制。
+map 和其他基本型别不同，它不是 thread-safe，在多个 go-routine 存取时，必须使用 `mutex lock` 机制。
 
 map 也是一种引用类型，如果两个 map 同时指向一个底层，那么一个改变，另一个也相应的改变：
 
