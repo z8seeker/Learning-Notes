@@ -401,12 +401,63 @@ m1["Hello"] = "Salut"
 
 `make` 只能创建 `slice`、`map` 和 `channel`，并且返回一个有初始值(非零)的 `T` 类型，而不是 `*T`
 
+```go
+p := new(int)  // p, of type *int, points to an unnamed int variable
+fmt.Println(*p) // "0"
+```
+
+Each call to `new` returns a distinct variable with a unique address. There is one exception to this rule: two variables whose type carries no information and is therefore of size zero, such as `struct{}` or `[0]int`, may, depending on the implementation, have the same address.
+
 
 ## 多重赋值
 
 ```go
+# tuple assignment
 i, j = j, i
+v, ok = m[key]  // map lookup
+v, ok = x.(T)  // type assertion
+v, ok = <-ch  // channel receive
+
+// assign unwanted values to the blank identifier
+_, err = io.Copy(dst, src)  // discard byte count
+_, ok = x.(T)
 ```
+
+可赋值性： the assignment is legal only if the __value__ is assignable to the type of the __variable__.
+
+## 类型声明
+
+A `type` declaration defines a new named type that has the same underlying type as an existing type:
+
+```go
+type name underlying-type_
+```
+
+A conversion from one type to another is allowed if both have the same underlying type, or if both are unnamed pointer types that point to variables of the same underlying type.
+
+two values ofdifferent named types cannot be compared directly.
+
+## packages and files
+
+Each package serves as a separate name space for its declarations.
+
+One package is initialized at a time, in the order of imports in the program, dependencies first. Initialization proceeds from the bottom up; the __main__ package is the last to be initialized.
+
+## scope
+
+The scope of a declaration is a region of the program text; it is a compile-time property.
+
+The lifetime of a variable is the range of time during execution when the variable can be referred to by other parts of the program; it is a run-time property.
+
+A name declared inside a syntactic block (lexical blocks) is not visible outside that block.
+
+__universe block__ is a lexical block for the entire source code:
+
+- built-in types
+- built-in functions
+- built-in constants
+
+A program may contain multiple declarations of the same name so long as each declaration is in a different lexical block.
 
 ## 小结
 
@@ -429,4 +480,3 @@ Go 语言支持的复合类型：
 - 通道， chan
 - 结构体， struct
 - 接口， interface
-
