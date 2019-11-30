@@ -69,11 +69,13 @@ func test() {
 }
 ```
 
+布尔类型不能接受其他类型的赋值，不支持自动或强制的类型转换。
+
 #### 数值类型
 
 整数类型有无符号和带符号两种。Go 同时支持 int 和 uint，这两种类型的长度相同。Go 里面也有直接定义好位数的类型：`rune`, `int8`, `int16`, `int32`, `int64` 和 `byte`, `uint8`, `uint16`, `uint32`, `uint64`。其中 `rune` 是 `int32` 的别称，`byte` 是 `uint8` 的别称。
 
-需要注意的一点是，这些类型的变量之间不允许互相赋值或操作，不然会在编译时引起编译器报错。
+需要注意的一点是，这些类型的变量之间不允许互相赋值或操作，不然会在编译时引起编译器报错。但各种类型的整型变量都可以直接与字面常量（literal）进行比较。
 
 浮点数的类型有 `float32` 和 `float64` 两种（没有 `float` 类型），默认是 `float64`。
 
@@ -128,6 +130,13 @@ m := `hello
         world`
 ```
 
+#### 字符类型
+
+Go 支持两个字符类型：
+
+- `byte`, 实际是 `uint8` 的别名，代表 UTF-8 字符串的单个字节的值
+- `rune`, 代表单个 Unicode 字符
+
 #### 错误类型
 
 Go 内置有一个 `error` 类型，专门用来处理错误信息，Go 的 package 里面还专门有一个包 `errors` 来处理错误:
@@ -135,7 +144,7 @@ Go 内置有一个 `error` 类型，专门用来处理错误信息，Go 的 pack
 ```go
 err := errors.New("emit macho dwarf: elf header corrupted")
 if err != nil {
-    fmt.Print(err)
+    fmt.Print(err)  # 不能使用 fmt.Printf
 }
 ```
 
@@ -227,7 +236,9 @@ b := [10]int{1, 2, 3}  // 对前 3 个元素初始化，其他元素默认为 0
 c := [...]int{4, 5, 6}  // 可以省略长度而采用`...`的方式，Go会自动根据元素个数来计算长度
 ```
 
-由于长度也是数组类型的一部分，因此 `[3]int` 与 `[4]int` 是不同的类型，数组也就不能改变长度。数组之间的赋值是值的赋值，即当把一个数组作为参数传入函数的时候，传入的其实是该数组的副本，而不是它的指针。
+由于长度也是数组类型的一部分，因此 `[3]int` 与 `[4]int` 是不同的类型，数组也就不能改变长度。在声明时长度可以为一个常量或者一个常量表达式（指在编译期即可计算结果）。可以用内置函数 `len()` 获取数组的长度。
+
+数组之间的赋值是值的赋值，即当把一个数组作为参数传入函数的时候，传入的其实是该数组的副本，而不是它的指针。
 
 Go支持嵌套数组，即多维数组:
 
@@ -238,6 +249,16 @@ doubleArray := [2][4]int{[4]int{1, 2, 3, 4}, [4]int{5, 6, 7, 8}}
 easyArray := [2][4]int{{1, 2, 3, 4}, {5, 6, 7, 8}}
 ```
 
+使用关键字 `range` 可以方便的遍历容器中的元素：
+
+```go
+for i, v := range array {
+    fmt.Println("Array element[", i, "]=", v)
+}
+```
+
+__注意__：在 Go 中数组是一个值类型（value type），所有的值类型在赋值和作为参数传递时都将产生一次复制动作。
+
 ### slice
 
 在初始定义数组时，有时我们并不知道需要多大的数组，此时需要使用“动态数组”。在Go里面这种数据结构叫 slice。
@@ -245,6 +266,10 @@ easyArray := [2][4]int{{1, 2, 3, 4}, {5, 6, 7, 8}}
 slice 总是指向一个底层 array，slice 的声明也可以像 array 一样，只是不需要长度:
 
 ```go
+// 直接创建
+var mySlice := make([]int, 5)  // 元素个数为 5
+var mySlice := make([]int, 5, 10) // 元素个数为 5，并预留 10 个元素的存储空间
+
 // 和声明 array 一样，只是少了长度
 var fslice []int
 
@@ -271,6 +296,8 @@ a = ar[5:]  // 包含元素 f, g, h, i, j
 a = ar[:]  // 包含了 ar 中的全部的元素
 
 a = ar[3:7]  // d, e, f, g, len=4, cap=7
+
+// 基于 slice 创建新的 slice
 b = a[1:3]  // e, f
 b = a[:3]  // d, e, f
 b = a[0:5]  // 对 slice 的 slice 可以在 cap 范围内扩展： d, e, f, g, h
@@ -285,10 +312,17 @@ slice 是引用类型，所以当引用改变其中元素的值时，其它的�
 
 对于 slice 有几个有用的内置函数：
 
-- len 获取 slice 的长度
-- cap 获取 slice 的最大容量
-- append 向 slice 里面追加一个或者多个元素，然后返回一个和 slice 一样类型的 slice
-- copy 从源 slice 的 src 中复制元素到目标 dst，并且返回复制的元素的个数
+- `len()` 获取 slice 的长度
+- `cap()` 获取 slice 的最大容量
+- `append()` 向 slice 里面追加一个或者多个元素，然后返回一个和 slice 一样类型的 slice
+- `copy()` 从源 slice 的 src 中复制元素到目标 dst，并且返回复制的元素的个数
+
+```go
+mySlice := make([]int, 5, 10)
+mySlice = append(mySlice, 1, 2, 3)  // append，的第二个参数是个不定参数
+mySlice2 := []int{8, 9, 10}
+mySlice = append(mySlice, mySlice2...)  // 加上省略号相当于把 mySlice2 打散后传入
+```
 
 注意：
 
@@ -299,14 +333,14 @@ slice 是引用类型，所以当引用改变其中元素的值时，其它的�
 
 ```go
 var array [10]int
-slice := array[2:4]  // slice 的容量是 10 - 2 = 8
+Vslice := array[2:4:]  // slice 的容量是 10 - 2 = 8
 
 new_slice := array[2:4:7]  // 容量变为 7 - 2 = 5, 无法访问最后的三个元素
 ```
 
 ### map
 
-map 也就是 python 中字典的概念：
+map 也就是 python 中字典的概念，是一堆键值对的未排序集合：
 
 ```go
 // 定义格式
@@ -322,6 +356,10 @@ var numbers map[string]int
 
 // 另一种 map 的声明方式
 numbers = make(map[string]int)
+
+//在创建时，指定初始存储能力
+numbers = make(map[string]int, 100)
+
 numbers["one"] = 1  // 赋值
 numbers["ten"] = 10  // 赋值
 numbers["three"] = 3
@@ -332,7 +370,7 @@ fmt.Println("第三个数字是：", numbers["three"])  // 读取数据
 rating := map[string]float32{"c": 5, "Go": 4.5, "Python": 4.5, "C++": 2}
 
 // map 有两个返回值，
-// 第二个返回值，如果不存在 key，那么 ok 为 false，如果存在, ok 为t rue
+// 第二个返回值，如果不存在 key，那么 ok 为 false，如果存在, ok 为 true
 csharpRating, ok := rating["C#"]
 if ok {
     fmt.Println("C# is in the map and its rating is", csharpRating)
@@ -340,10 +378,11 @@ if ok {
     fmt.Println("We have no rating accociated with C# in the map")
 }
 
+// 元素删除
 delete(rating, "C")  // 删除 key 为 C 的元素
 ```
 
-map 和其他基本型别不同，它不是 thread-safe，在多个 go-routine 存取时，必须使用 mutex lock 机制。
+map 和其他基本型别不同，它不是 thread-safe，在多个 go-routine 存取时，必须使用 `mutex lock` 机制。
 
 map 也是一种引用类型，如果两个 map 同时指向一个底层，那么一个改变，另一个也相应的改变：
 
@@ -358,6 +397,86 @@ m1["Hello"] = "Salut"
 
 `make` 用于内建类型（`map`、`slice` 和 `channel`）的内存分配。`new` 用于各种类型的内存分配。
 
-内建函数 `new` 本质上说跟其它语言中的同名函数功能一样：`new(T)` 分配了零值填充的 `T` 类型的内存空间，并且返回其地址，即一个 `*T` 类型的值。用 Go 的术语说，它返回了一个指针，指向新分配的类型 `T` 的零值。
+内建函数 `new` 本质上说跟其它语言中的同名函数功能一样：`new(T)` 分配了零值填充的 `T` 类型的内存空间，并且 __返回其地址__，即一个 `*T` 类型的值。用 Go 的术语说，它返回了一个指针，指向新分配的类型 `T` 的零值。
 
 `make` 只能创建 `slice`、`map` 和 `channel`，并且返回一个有初始值(非零)的 `T` 类型，而不是 `*T`
+
+```go
+p := new(int)  // p, of type *int, points to an unnamed int variable
+fmt.Println(*p) // "0"
+```
+
+Each call to `new` returns a distinct variable with a unique address. There is one exception to this rule: two variables whose type carries no information and is therefore of size zero, such as `struct{}` or `[0]int`, may, depending on the implementation, have the same address.
+
+
+## 多重赋值
+
+```go
+# tuple assignment
+i, j = j, i
+v, ok = m[key]  // map lookup
+v, ok = x.(T)  // type assertion
+v, ok = <-ch  // channel receive
+
+// assign unwanted values to the blank identifier
+_, err = io.Copy(dst, src)  // discard byte count
+_, ok = x.(T)
+```
+
+可赋值性： the assignment is legal only if the __value__ is assignable to the type of the __variable__.
+
+## 类型声明
+
+A `type` declaration defines a new named type that has the same underlying type as an existing type:
+
+```go
+type name underlying-type_
+```
+
+A conversion from one type to another is allowed if both have the same underlying type, or if both are unnamed pointer types that point to variables of the same underlying type.
+
+two values ofdifferent named types cannot be compared directly.
+
+## packages and files
+
+Each package serves as a separate name space for its declarations.
+
+One package is initialized at a time, in the order of imports in the program, dependencies first. Initialization proceeds from the bottom up; the __main__ package is the last to be initialized.
+
+## scope
+
+The scope of a declaration is a region of the program text; it is a compile-time property.
+
+The lifetime of a variable is the range of time during execution when the variable can be referred to by other parts of the program; it is a run-time property.
+
+A name declared inside a syntactic block (lexical blocks) is not visible outside that block.
+
+__universe block__ is a lexical block for the entire source code:
+
+- built-in types
+- built-in functions
+- built-in constants
+
+A program may contain multiple declarations of the same name so long as each declaration is in a different lexical block.
+
+## 小结
+
+Go 语言支持的基础类型：
+
+- 布尔类型，bool
+- 整型， int8, byte, int16, int, uint, uintptr 等
+- 浮点类型， float32, float64
+- 复数类型， complex64, complex128
+- 字符串， string
+- 字符类型， rune
+- 错误类型， error
+
+Go 语言支持的复合类型：
+
+- 指针， pointer
+- 数组， array
+- 切片， slice
+- 字典， map
+- 通道， chan
+- 结构体， struct
+- 接口， interface
