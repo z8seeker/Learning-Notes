@@ -130,12 +130,103 @@ m := `hello
         world`
 ```
 
+Raw 字符串可以方便的应用于 正则表达式、HTML 模板、JSON 字面量 等场景。
+
+
 #### 字符类型
 
 Go 支持两个字符类型：
 
 - `byte`, 实际是 `uint8` 的别名，代表 UTF-8 字符串的单个字节的值
-- `rune`, 代表单个 Unicode 字符
+- `rune`, 代表单个 Unicode 字符, 其实是 int32.
+
+UTF-8 编码
+
+UTF-8 是一种可变长的编码方案，将 Unicode code point 编码为 bytes。UTF-8 使用 1-4 个字节来表示每个 rune：
+
+- 使用 1 个字节表示 ASCII 字符
+- 使用 2 或 3 个字节表示绝大多数 rune
+
+The high-order bits of the first byte of the encoding, 表示有几个字节来表示该 rune:
+
+- 0, 表示 7 位的 ASCII， 此时每个 rune 只占用一个字节 （0-127）
+- 110， 表示该 rune 占用 2 个字节，且第二个字节以 10 开头 （128-2047）
+- 1110，表示该 rune 占用 3 个字节，且第二个字节和第三个字节都以 10 开头 (2048-65535)
+- 11110， 表示 rune 占用 4 个字节， 且第二个、第三个、第四个字节均以 10 开头 (65535-0x10ffff)
+
+```go
+"世界"
+"\xe4\xb8\x96\xe7\x95\x8c" # encoded in utf-8
+"\u4e16\u754c"  # unicode point
+"\U00004e16\U0000754c"
+```
+
+上面三个转义序列和第一个字符串是相同的，它们都有相同的值。
+
+A rune whose value is less than 256 may be written with a single hexadecimal escape, such as '\x41' for 'A', but for higher values,  a `\u` or `\U` escape must be used:
+
+```go
+'世'
+// legal
+'\u4e16'
+'\U00004e16'
+
+// illegal
+'\xe4\xb8\x96'
+```
+
+Thanks to the nice properties of UTF-8, many string operations don't require decoding.
+
+```go
+func HasPrefix(s, prefix string) bool {
+    return len(s) >= len(prefix) && s[: len(prefix)] == prefix
+}
+```
+
+Go’s range loop, when applied to a string, performs UTF-8 decoding implicitly. 因此，为了正确的对字符串使用 range 循环，需要确保字符串是 utf-8 编码的，否则会引发错误。
+
+A `[]rune` conversion applied to a UTF-8-encoded string returns the sequence of Unicode code points that the string encodes.
+
+Converting an integer value to a string interprets the integer as a rune value, and yields the UTF-8 representation of that rune:
+
+```go
+fmt.Println(string(65))  // "A", not "65"
+fmt.PrintLn(string(0x4eac))  // "京"
+```
+
+字符串与字节切片
+
+Go 语言中有四个非常有用的包用来处理字符串：
+
+- strings, 提供了用于 搜索、替换、比较、修剪（trimming）、切分 和 连接字符串的函数
+- bytes, 提供了与 strings 包类似的功能，用于处理 `[]bytes` 类型
+- strconv，布尔值、整数、浮点数与它们的字符串表示进行相互转换
+- unicode，提供了 `IsDigit`, `IsLetter`, `IsUpper` 和 `IsLower` 等函数用来分类 runes
+
+`bytes` 包中提供了 `Buffer` 类型，用于高效的处理字节切片。
+
+When appending the UTF-8 encoding of an arbitrary rune to a `bytes.Buffer`, it's best to use `WriteRune` method, but `WriteByte` is fine for ASCII characters.
+
+
+字符串与数值之间的转换
+
+将一个整数转换为一个字符串：
+
+- `fmt.Sprintf`
+- `strconv.Itoa` (integer to ASCII)
+
+```go
+x := 123
+y := fmt.Sprintf("%d", x)
+fmt.Println(y, strconv.Itoa(x))
+```
+
+To parse a string representing an integer, use the strconv functions `Atoi` or `ParseInt`,or `ParseUint` for unsigned integers:
+
+```go
+x, err := strconv.Atoi("123")  // x is an int
+y, err := strconv.parseInt("123", 10, 64) // base 10, up to 64 bits
+```
 
 #### 错误类型
 
