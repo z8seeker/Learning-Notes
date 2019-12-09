@@ -207,7 +207,6 @@ Go 语言中有四个非常有用的包用来处理字符串：
 
 When appending the UTF-8 encoding of an arbitrary rune to a `bytes.Buffer`, it's best to use `WriteRune` method, but `WriteByte` is fine for ASCII characters.
 
-
 字符串与数值之间的转换
 
 将一个整数转换为一个字符串：
