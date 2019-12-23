@@ -53,6 +53,52 @@ const constantName = value
 const Pi float32 = 3.1415926
 ```
 
+The results of all arithmetic, logical, and comparison operations applied to _constant operands_ are themselves constants, as are the results of conversions and calls to certain built-in functions such as `len`, `cap`, `real`, `imag`, `complex`, and `unsafe.Sizeof`.
+
+```go
+const (
+    a = 1
+    b
+    c = 2
+    d
+)
+fmt.Println(a, b, c, d) // "1 1 2 2"
+
+// the constant generator
+// this declares Sunday to be 0, Monday to be 1, and so on.
+type Weekday int
+
+const (
+    Sunday Weekday = iota
+    Monday
+    Tuesday
+    Wednesday
+    Thursday
+    Friday
+    Saturday
+)
+```
+
+UNTYPED CONSTANTS
+
+Many constants are not committed to a particular type. The compiler represents these _uncommitted constants_ with much greater numeric precision than values of basic types, and arithmetic on them is more precise than machine arithmetic. you may assume at least __256 bits of precision__
+
+Only constants can be untyped. When an untyped constant is assigned to a variable, or appears on the right-hand side of a variable declaration with an explicit type, the constant is implicitly converted to the type of that variable if possible.
+
+Whether implicit or explicit, converting a constant from one type to another requires that the target type can represent the original value.
+
+```go
+i := 0  // untyped integer; implicit int(0)
+r := '\000'  // untyped rune; implicit rune('\000')
+f := 0.0  // untyped floating-point; implicit float64(0.0)
+c := 0i  // untyped complex; implicit complex128(0i)
+
+// to give the variable a different type, explicitly convert or 
+// state the desired type in the variable declaration
+var i = int8(0)
+var i int8 = 0
+```
+
 ### 内置基础类型
 
 #### 布尔类型
@@ -324,9 +370,19 @@ arr[1] = 13  //
 a := [3]int{1, 2, 3}  // 声明一个长度为 3 的 int 数组
 b := [10]int{1, 2, 3}  // 对前 3 个元素初始化，其他元素默认为 0
 c := [...]int{4, 5, 6}  // 可以省略长度而采用`...`的方式，Go会自动根据元素个数来计算长度
+d := [...]int{99: -1}  // specify a list of index and value pairs.
 ```
 
 由于长度也是数组类型的一部分，因此 `[3]int` 与 `[4]int` 是不同的类型，数组也就不能改变长度。在声明时长度可以为一个常量或者一个常量表达式（指在编译期即可计算结果）。可以用内置函数 `len()` 获取数组的长度。
+
+If an array's element type is comparable then the array type is comparable too:
+
+```go
+a := [2]int{1, 2}
+b := [...]int{1, 2}
+c := [2]int{1, 3}
+fmt.Println(a == b, a== c, b == c)  // "true false false"
+```
 
 数组之间的赋值是值的赋值，即当把一个数组作为参数传入函数的时候，传入的其实是该数组的副本，而不是它的指针。
 

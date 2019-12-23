@@ -2,8 +2,8 @@
 
 Go’s types fall into four categories: 
 
-- basic types,
-- aggregate types, 
+- basic types. int, float, complex, rune, string, bool
+- aggregate types. arrays, structs
 - reference types, 
 - and interface types.
 
