@@ -81,6 +81,4 @@ upstream app_server {
 
 Nginx基于连接探测，如果发现后端异常，在单位周期为 `fail_timeout` 设置的时间，中达到 `max_fails` 次数，这个周期次数内，如果后端同一个节点不可用，那么接将把节点标记为不可用，并等待下一个周期（同样时常为 `fail_timeout` ）再一次去请求，判断是否连接是否成功。如果成功，将恢复之前的轮询方式，如果不可用将在下一个周期( `fail_timeout` )再试一次。
 
-
-
-有的时候情况是这样的，后端其实还有处理能力，但是因为 `fail_timeout` 和 `max_fails` 的值不理想，而被浪费了。这也是为什么有时候后端明明还活着，但是错误日志里却出现 no live upstreams while connecting to upstream
+有的时候情况是这样的，后端其实还有处理能力，但是因为 `fail_timeout` 和 `max_fails` 的值不理想，而被浪费了。这也是为什么有时候后端明明还活着，但是错误日志里却出现 no live upstreams while connecting to upstream 。
