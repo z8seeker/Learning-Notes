@@ -11,4 +11,3 @@ Tornado 与大多数 Python 框架不同，其并不是基于 WSGI 的，通常�
 一般情况下，tornado 程序不是线程安全的。tornado 中唯一线程安全的方法是 `IOLoop.add_callback`，可以安全的从其他线程进行调用。
 
 我们还可以使用 `IOLoop.run_in_executor` 从另一个线程中异步的运行一个阻塞的函数（blocking function），需要注意的是传入 `run_in_executor` 的函数应该避免引用任何 tornado 对象。使用 `run_in_executor` 与阻塞代码进行交互是 tornado 推荐的方式。
-
